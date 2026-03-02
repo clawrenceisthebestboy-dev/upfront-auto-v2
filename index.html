@@ -189,8 +189,8 @@ nav.scrolled{background:rgba(10,10,10,.96);backdrop-filter:blur(20px);padding:14
 .area-chip.primary{border-color:rgba(232,87,26,.3);color:var(--cream)}
 
 /* CTA FULL */
-.cta-full{position:relative;min-height:500px;display:flex;align-items:center;overflow:hidden;background:#0A0A0A;isolation:isolate}
-.cta-bg{position:absolute;inset:0;background:url(shop-3.jpg) center/cover no-repeat;background-color:#0A0A0A;filter:brightness(.15);z-index:0}
+.cta-full{position:relative;min-height:500px;display:flex;align-items:center;overflow:hidden;background:linear-gradient(135deg,#0A0A0A 0%,#1a0a0a 50%,#0A0A0A 100%);isolation:isolate}
+.cta-bg{display:none}
 .cta-c{position:relative;z-index:3;padding:0 5%;max-width:1080px;margin:0 auto;width:100%}
 .cta-c h2{font-family:var(--heading);font-size:clamp(3.5rem,8vw,7rem);font-weight:900;text-transform:uppercase;line-height:.92;color:var(--cream);margin-bottom:24px;letter-spacing:-1px}
 .cta-c h2 em{font-style:normal;color:var(--orange)}
@@ -516,7 +516,7 @@ footer{background:var(--black);padding:72px 5% 36px;border-top:1px solid rgba(25
 
 <!-- CTA FULL -->
 <div class="cta-full">
-  <div class="cta-bg"></div><div style="position:absolute;inset:0;background:#0A0A0A;opacity:.75;z-index:1"></div>
+  <div style="position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--orange);z-index:1"></div>
   <div class="cta-c">
     <h2>Ready to get<br>your car <em>fixed right?</em></h2>
     <p>Call us or drop by — call ahead to schedule your appointment. Mon–Fri, 8AM to 5PM.</p>
