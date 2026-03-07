@@ -109,7 +109,7 @@
   <div class="preview">
     <div class="preview-label">📱 Message Preview</div>
     <div class="preview-text" id="preview">
-      Hi <span class="hl">[Name]</span>! Thanks for choosing Up Front Auto Repair. We would love to hear about your experience — could you take a moment to leave us a quick Google review? It really helps our small business! https://g.page/r/CTKGSBpOmTIpEBM/review
+      Hi <span class="hl">[Name]</span>! Thanks for choosing Up Front Auto Repair. We would love to hear about your experience — could you take a moment to leave us a quick Google review? It really helps our small business! https://search.google.com/local/writereview?placeid=ChIJvcPI027tskwRerxv9r0m-Iw
     </div>
   </div>
   <a id="send-btn" class="btn disabled" href="#">
@@ -119,7 +119,7 @@
   <div class="counter">Sent today: <span id="count">0</span></div>
 </div>
 <script>
-  const REVIEW = 'https://g.page/r/CTKGSBpOmTIpEBM/review';
+  const REVIEW = 'https://search.google.com/local/writereview?placeid=ChIJvcPI027tskwRerxv9r0m-Iw';
   const today = new Date().toDateString();
   if (localStorage.getItem('sentDate') !== today) {
     localStorage.setItem('sentCount', '0');
