@@ -1,551 +1,2974 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Escape From Sal's Garage</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Escape From Sal's Super Save Auto | Up Front Auto Repair — Standish, ME</title>
+<meta name="description" content="Play the Up Front Auto Repair escape game. Dodge Sal's rip-offs, spot the fake diagnoses, and find your way to an honest mechanic in Standish, Maine.">
+<meta name="theme-color" content="#ff6b1a">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Bungee&family=Fredoka:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body {
-  background: #0a0a0f;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100vh;
-  overflow: hidden;
-  font-family: 'JetBrains Mono', monospace;
-  color: #e0e0e0;
-}
-canvas {
-  display: block;
-  image-rendering: pixelated;
-  border: 2px solid #2a1f3a;
-  box-shadow: 0 0 40px rgba(255,107,26,0.15), inset 0 0 60px rgba(0,0,0,0.5);
-}
-#ui {
-  position: absolute;
-  top: 12px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  gap: 24px;
-  font-family: 'Press Start 2P', monospace;
-  font-size: 10px;
-  color: #ff6b1a;
-  text-shadow: 0 0 8px rgba(255,107,26,0.6);
-  pointer-events: none;
-  white-space: nowrap;
-}
-#overlay {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  background: rgba(10,10,15,0.92);
-  z-index: 10;
-}
-#overlay h1 {
-  font-family: 'Press Start 2P', monospace;
-  font-size: 18px;
-  color: #ff6b1a;
-  text-shadow: 0 0 20px rgba(255,107,26,0.8);
-  margin-bottom: 20px;
-  text-align: center;
-  line-height: 1.8;
-}
-#overlay p {
-  font-size: 11px;
-  color: #a0a0b0;
-  margin-bottom: 8px;
-  text-align: center;
-  max-width: 400px;
-  line-height: 1.8;
-}
-#overlay .key {
-  color: #14a58b;
-  background: rgba(20,165,139,0.15);
-  border: 1px solid rgba(20,165,139,0.4);
-  padding: 2px 8px;
-  border-radius: 4px;
-}
-#overlay button, #overlay .btn {
-  margin-top: 24px;
-  font-family: 'Press Start 2P', monospace;
-  font-size: 10px;
-  color: #0a0a0f;
-  background: #ff6b1a;
-  border: none;
-  padding: 14px 28px;
-  cursor: pointer;
-  border-radius: 4px;
-  text-transform: uppercase;
-  box-shadow: 0 0 20px rgba(255,107,26,0.4);
-  transition: all 0.2s;
-}
-#overlay button:hover, #overlay .btn:hover {
-  background: #ff8c3a;
-  box-shadow: 0 0 30px rgba(255,107,26,0.7);
-  transform: translateY(-2px);
-}
-.win h1 { color: #14a58b !important; text-shadow: 0 0 20px rgba(20,165,139,0.8) !important; }
-.lose h1 { color: #ef4444 !important; text-shadow: 0 0 20px rgba(239,68,68,0.8) !important; }
+  :root {
+    --bg: #0a0a0f;
+    --sal-sky: #4a5d2c;
+    --sal-floor: #5c4a2a;
+    --sal-wall: #8a7c35;
+    --sal-wall-2: #6b6020;
+    --sal-accent: #b8a838;
+    --uf-bg: #0f1724;
+    --uf-sky: #3a8dde;
+    --uf-wall: #1a2940;
+    --uf-orange: #ff6b1a;
+    --uf-teal: #14a58b;
+    --text: #ececf3;
+    --muted: #8a8a98;
+    --good: #22c55e;
+    --bad: #ef4444;
+    --money: #facc15;
+    --ease: cubic-bezier(.2,.8,.2,1);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
+  html, body { margin: 0; padding: 0; background: #000; font-family: 'Fredoka', system-ui, sans-serif; color: var(--text); overflow: hidden; height: 100%; }
+  body { overscroll-behavior: none; touch-action: manipulation; }
+  h1, h2, h3, .display { font-family: 'Archivo Black', 'Archivo', sans-serif; letter-spacing: -0.01em; margin: 0; }
+  .bungee { font-family: 'Bungee', sans-serif; letter-spacing: .02em; }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+
+  #game { position: fixed; inset: 0; overflow: hidden; }
+
+  /* Scenes */
+  .scene { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity .6s var(--ease); padding: 20px; }
+  .scene.active { opacity: 1; pointer-events: auto; }
+  .scene-inner { width: 100%; max-width: 1100px; max-height: 100%; position: relative; }
+
+  /* === SAL'S WORLD === */
+  .sals-bg { background:
+    linear-gradient(180deg, rgba(40,50,20,.9), rgba(30,25,10,.95)),
+    radial-gradient(circle at 50% 30%, #5a4820, #2a1d0a);
+  }
+  .sals-bg::before {
+    content: ''; position: absolute; inset: 0;
+    background-image:
+      repeating-linear-gradient(90deg, transparent 0, transparent 48px, rgba(0,0,0,.15) 48px, rgba(0,0,0,.15) 50px),
+      repeating-linear-gradient(0deg, transparent 0, transparent 48px, rgba(0,0,0,.15) 48px, rgba(0,0,0,.15) 50px);
+    opacity: .4; pointer-events: none;
+  }
+  .sals-bg::after {
+    content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 35%;
+    background: linear-gradient(0deg, #3a2810 0%, transparent 100%);
+    pointer-events: none;
+  }
+
+  /* === UP FRONT WORLD === */
+  .uf-bg { background:
+    linear-gradient(180deg, #1e3a5f, #0f1724 70%),
+    radial-gradient(circle at 70% 20%, rgba(255,107,26,.2), transparent 60%);
+  }
+
+  /* Dust particles for Sal's */
+  .dust { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+  .dust span { position: absolute; width: 3px; height: 3px; background: rgba(255,230,150,.35); border-radius: 50%; animation: float 8s linear infinite; }
+  @keyframes float { from { transform: translateY(110vh) translateX(0); opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } to { transform: translateY(-10vh) translateX(40px); opacity: 0; } }
+
+  /* === BUTTONS === */
+  .btn {
+    display: inline-flex; align-items: center; gap: 10px; padding: 16px 28px; border-radius: 12px;
+    font-weight: 700; font-size: 18px; font-family: 'Fredoka', sans-serif; cursor: pointer;
+    border: 3px solid #000; background: var(--uf-orange); color: #0a0a0f;
+    box-shadow: 0 5px 0 #000, 0 8px 20px rgba(255,107,26,.4);
+    transition: transform .15s var(--ease), box-shadow .15s var(--ease);
+    text-decoration: none;
+  }
+  .btn:hover { transform: translateY(-2px); box-shadow: 0 7px 0 #000, 0 10px 24px rgba(255,107,26,.5); }
+  .btn:active { transform: translateY(3px); box-shadow: 0 2px 0 #000, 0 4px 12px rgba(255,107,26,.3); }
+  .btn-big { font-size: 22px; padding: 20px 36px; }
+  .btn-ghost { background: transparent; color: var(--text); border-color: var(--text); box-shadow: 0 5px 0 #000; }
+  .btn-ghost:hover { background: var(--text); color: #0a0a0f; }
+  .btn-real { background: #22c55e; }
+  .btn-fake { background: #ef4444; color: #fff; }
+
+  /* HUD */
+  #hud {
+    position: fixed; top: 14px; left: 14px; right: 14px; z-index: 50;
+    display: flex; justify-content: space-between; align-items: center;
+    pointer-events: none;
+  }
+  #hud .left, #hud .right { display: flex; gap: 10px; pointer-events: auto; }
+  .pill {
+    background: rgba(10,10,15,.7); backdrop-filter: blur(10px); border: 2px solid rgba(255,255,255,.15);
+    padding: 8px 14px; border-radius: 999px; font-family: 'JetBrains Mono', monospace;
+    font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 6px;
+  }
+  .pill.money { color: var(--money); border-color: rgba(250,204,21,.3); }
+  .pill.lies { color: #fca5a5; border-color: rgba(239,68,68,.3); }
+  .sound-toggle { cursor: pointer; width: 38px; height: 38px; display: grid; place-items: center; padding: 0; font-size: 16px; border-radius: 50%; }
+
+  /* === INTRO === */
+  #scene-intro h1 { font-size: clamp(40px, 10vw, 110px); text-align: center; line-height: .95; color: var(--uf-orange); text-shadow: 5px 5px 0 #000, 10px 10px 0 rgba(0,0,0,.3); transform: rotate(-2deg); margin-bottom: 10px; }
+  #scene-intro .subtitle { font-size: clamp(18px, 2.5vw, 28px); text-align: center; color: var(--text); font-weight: 600; margin-bottom: 10px; }
+  #scene-intro .caveat { color: var(--muted); font-size: 14px; text-align: center; max-width: 500px; margin: 20px auto; line-height: 1.5; }
+  .intro-car { margin: 30px auto; width: 280px; animation: driveIn 1.5s var(--ease) 0.2s both, bounce 1.8s ease-in-out infinite 1.5s; }
+  @keyframes driveIn { from { transform: translateX(-100vw); } to { transform: translateX(0); } }
+  @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+
+  /* === DIALOGUE SCENE === */
+  .stage { position: relative; width: 100%; height: 60vh; max-height: 500px; margin-bottom: 20px; }
+  .character { position: absolute; bottom: 0; height: 85%; }
+  .character.left { left: 5%; }
+  .character.right { right: 5%; }
+  .character.center { left: 50%; transform: translateX(-50%); }
+  .character svg { width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 10px 30px rgba(0,0,0,.5)); }
+  .character.talking { animation: talkBob .4s ease-in-out infinite alternate; }
+  @keyframes talkBob { to { transform: translateY(-4px); } }
+  .character.left.talking { animation: talkBobLeft .4s ease-in-out infinite alternate; }
+  @keyframes talkBobLeft { to { transform: translate(0, -4px); } }
+  .character.center.talking { animation: talkBobCenter .4s ease-in-out infinite alternate; }
+  @keyframes talkBobCenter { to { transform: translate(-50%, -4px); } }
+  /* Jon is short-statured — rendered smaller in the scene while standing on the same floor */
+  #jon-char { height: 62%; transform-origin: bottom right; }
+
+  .dialogue {
+    position: relative; background: #fff; color: #000; border: 4px solid #000; border-radius: 20px;
+    padding: 20px 24px; max-width: 820px; margin: 0 auto;
+    box-shadow: 6px 6px 0 #000;
+    font-size: clamp(16px, 2vw, 22px); font-weight: 500; line-height: 1.45;
+  }
+  .dialogue::after {
+    content: ''; position: absolute; top: -20px; left: 40px; width: 0; height: 0;
+    border: 16px solid transparent; border-bottom-color: #000; border-top: 0;
+  }
+  .dialogue::before {
+    content: ''; position: absolute; top: -14px; left: 44px; width: 0; height: 0;
+    border: 12px solid transparent; border-bottom-color: #fff; border-top: 0; z-index: 1;
+  }
+  .dialogue.right-pointer::after { left: auto; right: 40px; }
+  .dialogue.right-pointer::before { left: auto; right: 44px; }
+  .dialogue .speaker { font-family: 'Bungee', sans-serif; font-size: 14px; color: var(--uf-orange); text-transform: uppercase; letter-spacing: .1em; margin-bottom: 6px; }
+  .dialogue.jon .speaker { color: var(--uf-teal); }
+  .dialogue.mabel .speaker { color: #a855f7; }
+  .dialogue .choices { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+  .dialogue .choices .btn { font-size: 14px; padding: 10px 16px; border-width: 2px; box-shadow: 0 3px 0 #000; }
+
+  /* === DIAGNOSIS SCENE === */
+  .diag-wrap { display: grid; grid-template-columns: 280px 1fr; gap: 30px; align-items: stretch; max-width: 1100px; margin: 0 auto; width: 100%; }
+  @media (max-width: 800px) { .diag-wrap { grid-template-columns: 1fr; } }
+  .sal-stage { height: 320px; position: relative; }
+  .sal-stage svg { width: 100%; height: 100%; }
+  .problem-board { position: relative; background: linear-gradient(180deg, #fff 0%, #f1f1f1 100%); border: 4px solid #000; border-radius: 16px; padding: 24px; color: #000; box-shadow: 8px 8px 0 #000; min-height: 340px; display: flex; flex-direction: column; }
+  .problem-board .eyebrow { font-family: 'Bungee', sans-serif; color: #b91c1c; font-size: 12px; letter-spacing: .15em; margin-bottom: 8px; }
+  .problem-board .problem { font-family: 'Archivo Black', sans-serif; font-size: clamp(22px, 3vw, 36px); line-height: 1.1; margin-bottom: 16px; min-height: 3em; transition: opacity .3s; }
+  .problem-board .price { font-family: 'Bungee', sans-serif; color: #b91c1c; font-size: 28px; margin-bottom: 18px; }
+  .diag-actions { display: flex; gap: 14px; justify-content: center; margin-top: auto; }
+  .diag-actions .btn { flex: 1; max-width: 240px; justify-content: center; font-size: 20px; padding: 20px; }
+  .diag-timer { position: absolute; top: 16px; right: 16px; width: 50px; height: 50px; border: 3px solid #000; border-radius: 50%; display: grid; place-items: center; background: #fff; font-family: 'Bungee', sans-serif; font-size: 20px; color: #000; }
+  .feedback { position: absolute; left: 50%; top: 40%; transform: translate(-50%, -50%) scale(0); font-family: 'Bungee', sans-serif; font-size: 60px; pointer-events: none; opacity: 0; transition: none; z-index: 10; }
+  .feedback.show { animation: popFeedback .8s ease-out forwards; }
+  @keyframes popFeedback { 0% { opacity: 0; transform: translate(-50%, -50%) scale(0) rotate(-10deg); } 20% { opacity: 1; transform: translate(-50%, -50%) scale(1.2) rotate(-5deg); } 80% { opacity: 1; transform: translate(-50%, -50%) scale(1) rotate(-5deg); } 100% { opacity: 0; transform: translate(-50%, -70%) scale(1) rotate(-5deg); } }
+  .feedback.good { color: var(--good); text-shadow: 4px 4px 0 #000; }
+  .feedback.bad { color: var(--bad); text-shadow: 4px 4px 0 #000; }
+  .progress-dots { display: flex; gap: 6px; margin-top: 12px; }
+  .progress-dots .dot { width: 12px; height: 12px; border: 2px solid #000; border-radius: 50%; background: #fff; }
+  .progress-dots .dot.done-good { background: var(--good); }
+  .progress-dots .dot.done-bad { background: var(--bad); }
+  .progress-dots .dot.current { background: var(--money); animation: pulseDot 1s ease-in-out infinite; }
+  @keyframes pulseDot { 50% { transform: scale(1.3); } }
+
+  /* === BILL SCENE === */
+  .bill-scroll { background: linear-gradient(180deg, #fff5d8 0%, #f2e6b8 100%); border: 3px dashed #8a6d00; border-radius: 6px; padding: 30px; max-width: 500px; margin: 20px auto; box-shadow: 8px 14px 30px rgba(0,0,0,.6); color: #000; position: relative; font-family: 'JetBrains Mono', monospace; animation: unfurl 1s var(--ease); transform-origin: top; max-height: 60vh; overflow-y: auto; }
+  @keyframes unfurl { from { transform: scaleY(0.02); opacity: 0; } to { transform: scaleY(1); opacity: 1; } }
+  .bill-title { text-align: center; font-family: 'Bungee', sans-serif; font-size: 22px; margin-bottom: 6px; }
+  .bill-subtitle { text-align: center; font-size: 11px; margin-bottom: 16px; color: #444; }
+  .bill-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dotted #8a6d00; font-size: 13px; cursor: pointer; position: relative; align-items: center; gap: 10px; transition: background .2s; }
+  .bill-row:hover { background: rgba(255,107,26,.15); }
+  .bill-row.struck { color: #888; text-decoration: line-through; cursor: default; background: rgba(34,197,94,.1); }
+  .bill-row.struck:hover { background: rgba(34,197,94,.1); }
+  .bill-row .item { flex: 1; }
+  .bill-row .price { font-weight: 700; }
+  .bill-row .tap-hint { font-size: 9px; color: #b91c1c; font-family: 'Bungee', sans-serif; opacity: .7; }
+  .bill-row.struck .tap-hint { display: none; }
+  .bill-total { display: flex; justify-content: space-between; padding-top: 14px; margin-top: 10px; border-top: 3px double #000; font-family: 'Bungee', sans-serif; font-size: 22px; color: #b91c1c; }
+  .bill-stamp { position: absolute; top: 20px; right: 10px; border: 4px solid #b91c1c; color: #b91c1c; padding: 4px 12px; font-family: 'Bungee', sans-serif; font-size: 12px; transform: rotate(12deg); opacity: .7; }
+  #bill-continue { margin-top: 20px; }
+  .bill-instructions { text-align: center; max-width: 500px; margin: 10px auto; color: var(--text); font-size: 15px; }
+
+  /* === ESCAPE SCENE (Gardenscapes-style wide map w/ cloud gating) === */
+  .escape-room { position: relative; width: 100%; max-width: 980px; aspect-ratio: 16/9; border: 4px solid #000; border-radius: 18px; overflow: hidden; margin: 14px auto; box-shadow: 10px 10px 0 #000, inset 0 0 0 2px rgba(0,0,0,.25); background: #241810; }
+  /* The wide interior world, 1.875x the viewport. We pan it with transform as clouds clear. */
+  .esc-world { position: absolute; top: 0; left: 0; height: 100%; width: 187.5%; transition: transform 1.4s cubic-bezier(.22,1,.36,1); will-change: transform; }
+  .esc-world.pan-1 { transform: translateX(-26%); }
+  .esc-world.pan-2 { transform: translateX(-46.5%); }
+  .esc-bg { position:absolute; inset:0; width:100%; height:100%; display:block; pointer-events: none; z-index: 0; }
+  .escape-room .zone { z-index: 3; }
+  .escape-room .prop { position: absolute; z-index: 2; pointer-events: none; }
+  .escape-room .prop svg { width: 100%; height: auto; display: block; }
+  .escape-room .zone svg { width: 100%; height: auto; display: block; filter: drop-shadow(0 4px 3px rgba(0,0,0,.45)); }
+
+  /* Cloud / fog overlays that gate regions */
+  .esc-cloud { position: absolute; top: -6%; bottom: -6%; pointer-events: auto; z-index: 9; transition: opacity 1.3s ease, transform 1.3s ease, filter 1.3s ease; cursor: help; }
+  .esc-cloud svg { width: 100%; height: 100%; display: block; }
+  .esc-cloud.cleared { opacity: 0; transform: translateY(-30%) scale(1.15); filter: blur(12px); pointer-events: none; }
+  .esc-cloud-lock { position: absolute; left: 50%; top: 46%; transform: translate(-50%, -50%); background: rgba(0,0,0,.7); color: #ffec40; font-family: 'Bungee', sans-serif; font-size: 11px; letter-spacing: .1em; padding: 8px 14px; border: 2px solid #ffec40; border-radius: 999px; text-align:center; white-space:nowrap; box-shadow: 0 4px 10px rgba(0,0,0,.5); pointer-events: none; }
+  .esc-cloud-lock .hint-sub { display:block; font-size: 9px; color: #fff; letter-spacing: .05em; margin-top: 2px; opacity: .8; }
+  .esc-cloud.cleared .esc-cloud-lock { opacity: 0; transition: opacity .2s; }
+
+  /* Region-reveal sparkle when a cloud clears */
+  .esc-reveal-burst { position: absolute; pointer-events: none; z-index: 12; }
+  @keyframes sparkle { 0% { opacity: 0; transform: scale(.4); } 40% { opacity: 1; } 100% { opacity: 0; transform: scale(2.2); } }
+  .esc-reveal-burst circle { animation: sparkle 1.1s ease-out forwards; }
+
+  /* Pan indicator arrows */
+  .esc-pan { position: absolute; top: 50%; transform: translateY(-50%); z-index: 20; background: rgba(0,0,0,.75); color: #ffec40; border: 3px solid #ffec40; width: 46px; height: 46px; border-radius: 50%; font-family: 'Bungee', sans-serif; font-size: 22px; cursor: pointer; display: none; align-items: center; justify-content: center; padding: 0; box-shadow: 0 4px 10px rgba(0,0,0,.5); transition: transform .15s; }
+  .esc-pan:hover { transform: translateY(-50%) scale(1.1); }
+  .esc-pan.show { display: flex; }
+  .esc-pan.left { left: 10px; }
+  .esc-pan.right { right: 10px; }
+
+  /* Goal tracker at top of escape */
+  .escape-goals { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; max-width: 900px; margin: 0 auto 4px; }
+  .goal-chip { font-family: 'Bungee', sans-serif; font-size: 11px; padding: 6px 12px; border: 2px solid #000; border-radius: 999px; background: rgba(0,0,0,.55); color: #fff; letter-spacing: .05em; display: inline-flex; align-items: center; gap: 6px; }
+  .goal-chip.done { background: var(--good); color: #000; }
+  .goal-chip .chip-count { font-family: 'Archivo Black', sans-serif; }
+  .escape-inv-label { text-align:center; font-family: 'Bungee', sans-serif; font-size: 10px; letter-spacing: .15em; color: #888; margin-top: 6px; }
+  .inv-slot { position: relative; }
+  .inv-slot::after { content: attr(data-label); position: absolute; bottom: -16px; left: 50%; transform: translateX(-50%); font-size: 9px; color: #888; font-family: 'Bungee', sans-serif; white-space: nowrap; opacity: .7; }
+  .inv-slot.has::after { color: var(--money); opacity: 1; }
+  .escape-inv { margin-bottom: 24px; }
+
+  /* Escape button appears when requirements met. Positioned over the viewport (outside the panning world) */
+  .escape-final-btn { display: none; position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); padding: 12px 28px; font-family: 'Bungee', sans-serif; font-size: 16px; background: var(--good); color: #000; border: 3px solid #000; border-radius: 12px; box-shadow: 6px 6px 0 #000; cursor: pointer; letter-spacing: .1em; animation: pulseGo 1.2s ease-in-out infinite; z-index: 30; }
+  .escape-final-btn.ready { display: block; }
+  @keyframes pulseGo { 0%,100% { transform: translateX(-50%) scale(1); box-shadow: 6px 6px 0 #000; } 50% { transform: translateX(-50%) scale(1.04); box-shadow: 6px 6px 0 #000, 0 0 20px rgba(34,197,94,.6); } }
+
+  /* Money pickup animation */
+  .money-pop { position: absolute; font-family: 'Archivo Black', sans-serif; font-size: 20px; color: var(--money); text-shadow: 2px 2px 0 #000; pointer-events: none; z-index: 20; animation: moneyRise 1s ease-out forwards; }
+  @keyframes moneyRise { 0% { opacity:1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-60px); } }
+
+  /* Zone tooltip bubble */
+  .zone-tip { position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%) translateY(-6px); background: #ffec40; color: #000; padding: 4px 10px; border: 2px solid #000; border-radius: 6px; font-family: 'Bungee', sans-serif; font-size: 10px; white-space: nowrap; box-shadow: 2px 2px 0 #000; opacity: 0; pointer-events: none; transition: opacity .15s; z-index: 5; }
+  .zone:hover .zone-tip { opacity: 1; }
+  .zone.locked-z:hover { filter: drop-shadow(0 0 6px #ef4444); }
+  .zone.locked-z { cursor: not-allowed; }
+  .zone.done-z { opacity: .55; pointer-events: none; }
+  .zone { position: absolute; cursor: pointer; transition: transform .15s var(--ease); z-index: 3; }
+  .zone:hover { transform: scale(1.08); filter: drop-shadow(0 0 10px #ffec40); }
+  .zone.shine::before { content:''; position:absolute; inset:-6%; border-radius: 50%; background: radial-gradient(circle, rgba(255,236,64,.35) 0%, transparent 70%); animation: shinePulse 1.6s ease-in-out infinite; pointer-events: none; z-index: -1; }
+  @keyframes shinePulse { 0%,100% { opacity:.35; transform: scale(1);} 50% { opacity:.9; transform: scale(1.15);} }
+  .clickable { position: absolute; cursor: pointer; transition: transform .2s var(--ease); }
+  .clickable:hover { transform: scale(1.1); filter: drop-shadow(0 0 12px #ffec40); }
+  .clickable.done { opacity: .4; pointer-events: none; }
+  .clickable.locked { opacity: .5; cursor: not-allowed; }
+  .clickable.locked:hover { transform: none; filter: none; }
+  .escape-label { position: absolute; bottom: -22px; left: 50%; transform: translateX(-50%); font-family: 'Bungee', sans-serif; font-size: 11px; color: #ffec40; white-space: nowrap; text-shadow: 1px 1px 0 #000; opacity: 0; transition: opacity .2s; }
+  .clickable:hover .escape-label { opacity: 1; }
+  .inventory { display: flex; gap: 10px; justify-content: center; margin-top: 10px; }
+  .inv-slot { width: 60px; height: 60px; border: 3px dashed rgba(255,255,255,.3); border-radius: 10px; display: grid; place-items: center; background: rgba(0,0,0,.4); }
+  .inv-slot.has { border-style: solid; border-color: var(--money); background: rgba(250,204,21,.15); animation: invPop .4s ease-out; }
+  @keyframes invPop { 0% { transform: scale(0); } 70% { transform: scale(1.3); } 100% { transform: scale(1); } }
+  .inv-slot svg { width: 40px; height: 40px; }
+  .escape-hint { text-align: center; margin-top: 10px; color: var(--text); font-size: 14px; min-height: 22px; }
+
+  /* Region labels that float above cloud layers when cleared */
+  .region-label { position: absolute; top: 4%; font-family: 'Bungee', sans-serif; font-size: 12px; color: #ffec40; text-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000; background: rgba(0,0,0,.4); padding: 4px 10px; border-radius: 999px; z-index: 5; pointer-events: none; letter-spacing: .1em; opacity: 0; transition: opacity .8s ease .6s; }
+  .region-label.show { opacity: 1; }
+
+  /* === DRIVE SCENE === */
+  #drive-canvas { width: 100%; max-width: 900px; aspect-ratio: 16/9; background: linear-gradient(180deg, #87ceeb 0%, #b8e0d8 70%, #7a9555 70%, #6b8340 100%); border: 4px solid #000; border-radius: 14px; display: block; margin: 0 auto; box-shadow: 8px 8px 0 #000; }
+  .drive-hud { display: flex; justify-content: space-between; align-items: center; max-width: 900px; margin: 14px auto 0; gap: 10px; }
+  .drive-controls { display: flex; gap: 10px; }
+  .ctrl-btn { width: 60px; height: 60px; border-radius: 50%; border: 3px solid #000; background: var(--uf-orange); color: #000; font-size: 28px; font-weight: 900; box-shadow: 0 4px 0 #000; cursor: pointer; display: grid; place-items: center; }
+  .ctrl-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #000; }
+
+  /* === UP FRONT SCENE === */
+  .gauge-wrap { background: #0a0a0f; border: 3px solid #000; border-radius: 18px; padding: 24px; max-width: 460px; margin: 20px auto; text-align: center; box-shadow: 8px 8px 0 #000; }
+  .gauge-wrap h3 { font-family: 'Bungee', sans-serif; font-size: 16px; margin-bottom: 12px; color: var(--uf-orange); letter-spacing: .1em; }
+  .gauge-svg { width: 100%; max-width: 340px; margin: 0 auto; display: block; }
+  .real-problem { font-family: 'Archivo Black', sans-serif; font-size: 28px; margin: 14px 0 6px; opacity: 0; transition: opacity .6s; }
+  .real-problem.show { opacity: 1; }
+  .real-quote { font-family: 'Bungee', sans-serif; color: var(--good); font-size: 40px; opacity: 0; transition: opacity .6s; }
+  .real-quote.show { opacity: 1; }
+
+  /* === SCORECARD === */
+  .scorecard { background: #fff; color: #000; border: 4px solid #000; border-radius: 20px; padding: 32px; max-width: 540px; margin: 0 auto; box-shadow: 10px 10px 0 var(--uf-orange); position: relative; overflow: hidden; }
+  .scorecard::before { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(45deg, transparent 0 30px, rgba(255,107,26,.04) 30px 32px); pointer-events: none; }
+  .scorecard h2 { font-family: 'Bungee', sans-serif; font-size: clamp(24px, 4vw, 36px); text-align: center; margin-bottom: 20px; color: #000; }
+  .score-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 2px dotted #000; font-weight: 600; }
+  .score-row .value { font-family: 'Bungee', sans-serif; color: var(--uf-orange); }
+  .score-row.big { font-size: clamp(22px, 3vw, 32px); border-bottom: 4px solid #000; padding: 18px 0; margin-top: 10px; }
+  .score-row.big .value { font-size: clamp(28px, 4vw, 42px); color: var(--good); }
+  .stars { font-family: 'Archivo Black', sans-serif; color: var(--money); letter-spacing: 3px; }
+  .final-cta { background: var(--uf-orange); color: #000; border: 4px solid #000; border-radius: 16px; padding: 20px; text-align: center; margin-top: 24px; box-shadow: 6px 6px 0 #000; font-weight: 700; line-height: 1.4; }
+  .final-cta strong { font-family: 'Bungee', sans-serif; font-size: 18px; display: block; margin-bottom: 6px; }
+  .final-cta a { color: #000; font-family: 'Bungee', sans-serif; font-size: 26px; text-decoration: none; display: inline-block; margin-top: 8px; }
+  .final-actions { display: flex; gap: 12px; justify-content: center; margin-top: 20px; flex-wrap: wrap; }
+
+  /* === SCENE TRANSITIONS === */
+  .fade-overlay { position: fixed; inset: 0; background: #000; z-index: 99; opacity: 0; pointer-events: none; transition: opacity .4s; }
+  .fade-overlay.show { opacity: 1; pointer-events: auto; }
+
+  /* === SPEECH === */
+  .spot-callout { position: absolute; background: #fff; border: 3px solid #000; border-radius: 12px; padding: 8px 14px; font-family: 'Bungee', sans-serif; font-size: 13px; color: #000; transform: rotate(-4deg); box-shadow: 3px 3px 0 #000; z-index: 5; }
+  .spot-callout.red { background: #fee2e2; color: #b91c1c; }
+
+  /* Accessibility */
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+
+  /* Mobile tweaks */
+  @media (max-width: 640px) {
+    .diag-actions { flex-direction: column; gap: 10px; }
+    .diag-actions .btn { max-width: none; }
+    .sal-stage { height: 200px; }
+    .intro-car { width: 200px; }
+    .dialogue { font-size: 16px; padding: 16px 18px; }
+    #hud { top: 10px; left: 10px; right: 10px; }
+    .pill { font-size: 11px; padding: 6px 10px; }
+  }
+
+  /* Utility */
+  .mt-0 { margin-top: 0 !important; }
+  .center { text-align: center; }
+  .flex-col { display: flex; flex-direction: column; align-items: center; }
+  .gap-10 { gap: 10px; }
+  .gap-20 { gap: 20px; }
 </style>
 </head>
 <body>
+<div id="game">
+  <div id="hud">
+    <div class="left">
+      <div class="pill money" id="hud-money" style="display:none">💰 <span id="hud-money-val">$0</span></div>
+      <div class="pill lies" id="hud-lies" style="display:none">🔍 <span id="hud-lies-val">0</span>/10</div>
+    </div>
+    <div class="right">
+      <button class="pill sound-toggle" id="sound-toggle" title="Toggle sound" aria-label="Toggle sound">🔊</button>
+    </div>
+  </div>
 
-<div id="ui">
-  <span id="timer">TIME: 60</span>
-  <span id="score">SCORE: 0</span>
-  <span id="keys">KEYS: 0/3</span>
+  <!-- INTRO -->
+  <section class="scene active uf-bg" id="scene-intro">
+    <div class="scene-inner flex-col">
+      <div class="subtitle">A cartoon escape from a shady Maine mechanic</div>
+      <h1 class="bungee">ESCAPE FROM<br>SAL'S!</h1>
+      <div class="subtitle" style="margin-top:10px;">presented by Up Front Auto Repair · Standish, ME</div>
+      <div class="intro-car" id="intro-car"></div>
+      <button class="btn btn-big" id="start-btn">▶ START GAME</button>
+      <div class="caveat">
+        Your hot rod just broke down on Route 25. The first shop you see is a place called <strong>Sal's Super Save Auto &amp; Bait Shop</strong>.<br><br>
+        Spoiler: it doesn't end well. (But then it does.)
+      </div>
+    </div>
+  </section>
+
+  <!-- MEET SAL -->
+  <section class="scene sals-bg" id="scene-meet">
+    <div class="dust" id="dust-1"></div>
+    <div class="scene-inner">
+      <div class="stage">
+        <div class="character right" id="sal-char-1"></div>
+        <div class="character left" id="you-char"></div>
+      </div>
+      <div class="dialogue" id="meet-dialogue">
+        <div class="speaker" id="meet-speaker">SAL SNEAKERTON</div>
+        <div id="meet-text">Well well well! Another customer at Sal's Super Save Auto &amp; Bait Shop. Come to the right place, friend. What seems to be the problem?</div>
+        <div class="choices" id="meet-choices">
+          <button class="btn" data-next="meet-2">"My car made a weird noise."</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DIAGNOSIS (SPOT THE LIE) -->
+  <section class="scene sals-bg" id="scene-diag">
+    <div class="dust" id="dust-2"></div>
+    <div class="scene-inner" style="position:relative">
+      <div class="feedback" id="diag-feedback"></div>
+      <p class="diag-prompt-line" style="text-align:center; font-family:'Archivo Black',sans-serif; font-size: clamp(14px,2vw,18px); color:#ffec40; text-shadow: 2px 2px 0 #000; margin: 0 0 10px;">
+        🔧 Sal says each thing below is wrong with your car. Is he telling the truth — or making it up?
+      </p>
+      <div class="diag-wrap">
+        <div class="sal-stage" id="sal-stage-diag"></div>
+        <div class="problem-board">
+          <div class="diag-timer-wrap" style="position:absolute; top:10px; right:10px; text-align:center;">
+            <div style="font-family:'Bungee',sans-serif; font-size:9px; color:#000; letter-spacing:1px; margin-bottom:2px;">SECONDS</div>
+            <div class="diag-timer" id="diag-timer">8</div>
+          </div>
+          <div class="eyebrow">SAL'S CLAIM ·  <span id="diag-count">1 of 10</span></div>
+          <div class="problem" id="diag-problem">Loading diagnosis...</div>
+          <div class="price" id="diag-price">$???</div>
+          <div class="diag-actions" style="flex-direction:column; gap:8px; align-items:stretch;">
+            <div style="font-family:'Bungee',sans-serif; font-size:12px; color:#ffec40; text-align:center; letter-spacing:1px;">IS THIS A REAL PROBLEM?</div>
+            <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
+              <button class="btn btn-real" id="btn-real" style="min-width:170px;">✓ YES — REAL</button>
+              <button class="btn btn-fake" id="btn-fake" style="min-width:170px;">✗ NO — HE'S LYING</button>
+            </div>
+          </div>
+          <div class="progress-dots" id="progress-dots"></div>
+        </div>
+      </div>
+      <p class="center" style="margin-top: 16px; color: var(--muted); font-size: 12px;">Tip: words like BLINKER FLUID, MUFFLER BEARINGS, and JOHNSON ROD are <b>not real parts</b>. Press <kbd>R</kbd> for Real or <kbd>F</kbd> for Fake.</p>
+    </div>
+  </section>
+
+  <!-- MABEL TIP -->
+  <section class="scene sals-bg" id="scene-mabel">
+    <div class="dust"></div>
+    <div class="scene-inner">
+      <div class="stage">
+        <div class="character right" id="mabel-char"></div>
+      </div>
+      <div class="dialogue mabel right-pointer" id="mabel-dialogue">
+        <div class="speaker">MABEL · FELLOW CUSTOMER</div>
+        <div>Psst. Kid. Listen to me. There's a real shop down the road — <strong>Up Front Auto Repair</strong>. On Route 25, in Standish. They'll fix your car honest. No made-up parts. Just... get out of here first.</div>
+        <div class="choices">
+          <button class="btn" id="mabel-continue">"Thanks, Mabel."</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- THE BILL -->
+  <section class="scene sals-bg" id="scene-bill">
+    <div class="dust"></div>
+    <div class="scene-inner" style="text-align:center; width:100%; max-width: 700px;">
+      <h2 class="bungee" style="color: #b91c1c; font-size: clamp(24px, 4vw, 36px); margin-bottom: 6px; text-shadow: 3px 3px 0 #000;">SAL'S INVOICE</h2>
+      <p class="bill-instructions">Tap any line item you think is bogus to dispute it. Get the bill as low as possible. Then walk out.</p>
+      <div class="bill-scroll" id="bill-scroll">
+        <div class="bill-stamp">PAST DUE</div>
+        <div class="bill-title">SAL'S SUPER SAVE AUTO</div>
+        <div class="bill-subtitle">"Honest Work, Questionable Prices" · 666 Route 25</div>
+        <div id="bill-items"></div>
+        <div class="bill-total">
+          <span>TOTAL</span>
+          <span id="bill-total">$0</span>
+        </div>
+      </div>
+      <button class="btn btn-big" id="bill-continue" style="margin-top: 20px;">⟶ REFUSE &amp; WALK OUT</button>
+    </div>
+  </section>
+
+  <!-- ESCAPE (Gardenscapes-style scavenger adventure) -->
+  <section class="scene sals-bg" id="scene-escape">
+    <div class="dust"></div>
+    <div class="scene-inner" style="width:100%;">
+      <h2 class="bungee" style="text-align:center; color: var(--uf-orange); font-size: clamp(20px, 3.5vw, 30px); text-shadow: 3px 3px 0 #000; margin: 0 0 6px;">GET OUT OF THE GARAGE</h2>
+      <p class="escape-hint center" style="margin: 0 auto 10px; max-width: 720px; font-size: 13px;">Sal stepped out. Scavenge the parts your car needs, scrounge cash, find the keys, and slip past Surcharge. <b style="color:#ffec40;">Fog blocks areas you haven't unlocked yet</b> — grab the right items to blow each cloud away and reveal what's behind it.</p>
+
+      <!-- Goal tracker -->
+      <div class="escape-goals" id="escape-goals"></div>
+
+      <!-- Main scene -->
+      <div class="escape-room" id="escape-room"></div>
+
+      <!-- Inventory -->
+      <div class="escape-inv-label">INVENTORY</div>
+      <div class="inventory escape-inv" id="inventory">
+        <div class="inv-slot" id="inv-rag" data-label="Rag"></div>
+        <div class="inv-slot" id="inv-wrench" data-label="Wrench"></div>
+        <div class="inv-slot" id="inv-keys" data-label="Keys"></div>
+        <div class="inv-slot" id="inv-bone" data-label="Bone"></div>
+        <div class="inv-slot" id="inv-plug" data-label="Spark plug"></div>
+        <div class="inv-slot" id="inv-filter" data-label="Air filter"></div>
+      </div>
+
+      <!-- Status line -->
+      <p class="escape-hint" id="escape-status" style="font-family:'Bungee',sans-serif; min-height: 1.4em; color:#ffec40; font-size: 13px; margin-top: 10px;">Look around Sal's shop. Click the tire pile, the workbench, anything that looks useful.</p>
+    </div>
+  </section>
+
+  <!-- DRIVE -->
+  <section class="scene uf-bg" id="scene-drive">
+    <div class="scene-inner" style="width:100%;">
+      <h2 class="bungee" style="text-align:center; color: var(--uf-orange); font-size: clamp(22px, 4vw, 32px); text-shadow: 3px 3px 0 #000;">ROUTE 25 · 10 MILES TO STANDISH</h2>
+      <p class="escape-hint center" style="margin: 10px auto;">Grab dollar signs · dodge potholes &amp; moose</p>
+      <canvas id="drive-canvas" width="960" height="540"></canvas>
+      <div class="drive-hud">
+        <div class="pill money">💰 <span id="drive-money">$0</span></div>
+        <div class="drive-controls">
+          <button class="ctrl-btn" id="ctrl-up" aria-label="Jump">↑</button>
+        </div>
+        <div class="pill">📍 <span id="drive-distance">0%</span></div>
+      </div>
+      <p class="escape-hint center" style="margin-top: 10px; font-size: 12px;">Tap the orange button or press SPACE / ↑ to jump</p>
+    </div>
+  </section>
+
+  <!-- UP FRONT ARRIVAL -->
+  <section class="scene uf-bg" id="scene-upfront">
+    <div class="scene-inner" style="width:100%;">
+      <div class="stage">
+        <div class="character right" id="jon-char"></div>
+        <div class="character left" id="you-char-uf"></div>
+      </div>
+      <div id="upfront-dialogue-wrap">
+        <div class="dialogue jon" id="upfront-dialogue">
+          <div class="speaker">JON · UP FRONT AUTO REPAIR</div>
+          <div id="upfront-text">Hey there. I'm Jon. Come on in — let's see what's really going on with your car.</div>
+          <div class="choices" id="upfront-choices">
+            <button class="btn" id="upfront-next">"Thanks. Please be honest with me."</button>
+          </div>
+        </div>
+      </div>
+      <div class="gauge-wrap" id="gauge-wrap" style="display:none;">
+        <h3>HONEST DIAGNOSTIC IN PROGRESS</h3>
+        <svg class="gauge-svg" viewBox="0 0 200 120">
+          <path d="M 20 100 A 80 80 0 0 1 180 100" stroke="#333" stroke-width="14" fill="none" stroke-linecap="round"/>
+          <path id="gauge-arc" d="M 20 100 A 80 80 0 0 1 180 100" stroke="url(#gaugeGrad)" stroke-width="14" fill="none" stroke-linecap="round" stroke-dasharray="251" stroke-dashoffset="251"/>
+          <defs>
+            <linearGradient id="gaugeGrad" x1="0" x2="1">
+              <stop offset="0%" stop-color="#ef4444"/>
+              <stop offset="50%" stop-color="#facc15"/>
+              <stop offset="100%" stop-color="#22c55e"/>
+            </linearGradient>
+          </defs>
+          <g id="gauge-needle" style="transform-origin: 100px 100px; transform: rotate(-90deg); transition: transform 2s cubic-bezier(.2,.8,.2,1);">
+            <line x1="100" y1="100" x2="100" y2="30" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+            <circle cx="100" cy="100" r="6" fill="#fff"/>
+          </g>
+        </svg>
+        <div class="real-problem" id="real-problem">Loose gas cap.</div>
+        <div class="real-quote" id="real-quote">$0.00</div>
+        <div style="color: #888; font-size: 13px; margin-top: 6px;" id="real-note">"Tightened it. You're good. Have a nice day."</div>
+        <button class="btn btn-big" id="approve-btn" style="margin-top: 20px; display:none;">✓ GREAT. SEE YOU NEXT INSPECTION.</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- SCORECARD -->
+  <section class="scene uf-bg" id="scene-score">
+    <div class="scene-inner">
+      <div class="scorecard">
+        <h2>YOU ESCAPED SAL'S</h2>
+        <div class="score-row"><span>Sal tried to charge you</span><span class="value" id="sc-sal">$4,847</span></div>
+        <div class="score-row"><span>You paid at Up Front</span><span class="value" id="sc-paid">$0</span></div>
+        <div class="score-row"><span>Lies you spotted</span><span class="value" id="sc-lies">0 / 6</span></div>
+        <div class="score-row"><span>Cash scavenged</span><span class="value" id="sc-coins">0</span></div>
+        <div class="score-row"><span>Honesty score</span><span class="stars" id="sc-stars">★★★★★</span></div>
+        <div class="score-row big"><span>YOU SAVED</span><span class="value" id="sc-saved">$0</span></div>
+        <div class="final-cta">
+          <strong>Real life isn't a game.</strong>
+          Up Front Auto Repair is at 129 Ossipee Trail W, Standish, ME. Honest diagnostics, fair prices, no upsells. $18.50 state inspections.
+          <br><a href="tel:2076484747">☎ (207) 648-4747</a>
+        </div>
+        <div class="final-actions">
+          <button class="btn" id="share-btn">📣 SHARE YOUR SCORE</button>
+          <button class="btn btn-ghost" id="replay-btn">↻ PLAY AGAIN</button>
+        </div>
+      </div>
+    </div>
+  </section>
 </div>
 
-<div id="overlay">
-  <h1>ESCAPE FROM<br>SAL'S GARAGE</h1>
-  <p>Sal's shop is closing and you left your keys inside.</p>
-  <p>Find <span class="key">3 WRENCHES</span>, then escape through the exit!</p>
-  <p style="margin-top:12px; color:#606070; font-size:10px;">WASD / ARROWS to move &nbsp;|&nbsp; SPACE to interact</p>
-  <button onclick="startGame()">INSERT COIN</button>
-</div>
-
-<canvas id="game"></canvas>
+<div class="fade-overlay" id="fade"></div>
 
 <script>
-// ─── CONSTANTS ────────────────────────────────────────────────────────────────
-const TILE = 40;
-const COLS = 20;
-const ROWS = 15;
-const W = COLS * TILE;
-const H = ROWS * TILE;
+/* =========================================================================
+   ESCAPE FROM SAL'S — single-file game
+   Built for Up Front Auto Repair · Standish, ME
+   ========================================================================= */
 
-// ─── MAP ──────────────────────────────────────────────────────────────────────
-// 0=floor, 1=wall, 2=car, 3=wrench, 4=exit, 5=desk, 6=oil stain, 7=tire stack
-const MAP = [
-  [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-  [1,6,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,4,1],
-  [1,0,1,1,0,1,0,1,1,1,0,1,1,0,1,0,1,1,0,1],
-  [1,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,1],
-  [1,0,1,0,1,1,1,1,0,1,1,1,1,1,1,1,0,1,0,1],
-  [1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,1],
-  [1,1,1,1,1,0,0,1,0,1,1,1,1,1,0,1,0,1,1,1],
-  [1,3,0,0,0,0,0,0,0,1,7,7,7,1,0,0,0,0,0,1],
-  [1,0,1,1,1,1,0,1,1,1,0,0,0,1,1,1,1,1,0,1],
-  [1,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,1],
-  [1,1,1,0,1,1,1,1,1,1,0,1,1,1,1,1,1,1,0,1],
-  [1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,5,0,0,0,1],
-  [1,0,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,3,1],
-  [1,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,1],
-  [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-];
-
-// ─── CANVAS SETUP ─────────────────────────────────────────────────────────────
-const canvas = document.getElementById('game');
-const ctx = canvas.getContext('2d');
-canvas.width = W;
-canvas.height = H;
-
-// ─── COLORS ───────────────────────────────────────────────────────────────────
-const C = {
-  floor:    '#1a1625',
-  floorAlt: '#1e1a2e',
-  wall:     '#2d2440',
-  wallTop:  '#3d3260',
-  carBody:  ['#c0392b','#2471a3','#1e8449','#d4ac0d','#7d3c98'],
-  wrench:   '#ff6b1a',
-  exit:     '#14a58b',
-  desk:     '#6b4c3a',
-  oil:      '#1a1a2a',
-  tire:     '#2a2a3a',
-  player:   '#f0c040',
-  playerDk: '#b08020',
+/* ===== STATE ===== */
+const S = {
+  scene: 'intro',
+  liesCaught: 0,     // correctly flagged FAKE
+  liesMissed: 0,     // FAKE flagged as REAL
+  realMissed: 0,     // REAL flagged as FAKE (false positive)
+  totalFake: 0,      // total FAKE items in diagnosis
+  billTotal: 0,
+  billDisputed: 0,
+  coins: 0,
+  soundOn: true,
+  startTime: null,
+  hasBone: false,
+  hasKeys: false,
+  dogDistracted: false,
+  drawerOpened: false,
+  hasRag: false,
+  hasWrench: false,
+  hasPlug: false,
+  hasFilter: false,
+  escapeCash: 0,
 };
 
-// ─── GAME STATE ───────────────────────────────────────────────────────────────
-let player, wrenches, exitPos, walls, cars, desks, oilStains, tireStacks;
-let score, keys, gameTime, gameRunning, gameOver, won, animFrame;
-let keysPressed = {};
-let lastTime = 0;
-let particles = [];
-let screenShake = 0;
+/* ===== AUDIO (Web Audio synth — SFX + music + engine + dog) ===== */
+let audioCtx = null;
+let masterGain = null, musicGain = null, sfxGain = null;
 
-// ─── INIT ─────────────────────────────────────────────────────────────────────
-function initGame() {
-  player = { x: 9 * TILE, y: 13 * TILE, vx: 0, vy: 0, dir: 0, walk: 0, frame: 0 };
-  score = 0;
-  keys = 0;
-  gameTime = 60;
-  gameRunning = true;
-  gameOver = false;
-  won = false;
-  particles = [];
-  screenShake = 0;
+function initAudio() {
+  if (audioCtx) return;
+  try {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    masterGain = audioCtx.createGain();
+    masterGain.gain.value = 1;
+    masterGain.connect(audioCtx.destination);
+    musicGain = audioCtx.createGain();
+    musicGain.gain.value = 0.22;
+    musicGain.connect(masterGain);
+    sfxGain = audioCtx.createGain();
+    sfxGain.gain.value = 1;
+    sfxGain.connect(masterGain);
+  } catch(e) {}
+}
 
-  wrenches = [];
-  exitPos = null;
-  walls = [];
-  cars = [];
-  desks = [];
-  oilStains = [];
-  tireStacks = [];
+/* --- One-shot SFX --- */
+function sfx(type) {
+  if (!S.soundOn || !audioCtx) return;
+  if (type === 'bark') { bark(); return; }
+  if (type === 'growl') { growl(); return; }
+  if (type === 'engine') { engineRevOneShot(); if (engineNodes) revEngine(); return; }
+  const now = audioCtx.currentTime;
+  const presets = {
+    click:   { freq: 660, dur: 0.07, vol: 0.15, type: 'square', slide: 0 },
+    good:    { freq: 520, dur: 0.18, vol: 0.22, type: 'triangle', slide: 400 },
+    bad:     { freq: 180, dur: 0.3,  vol: 0.25, type: 'sawtooth', slide: -80 },
+    ding:    { freq: 880, dur: 0.25, vol: 0.2,  type: 'sine',     slide: 0 },
+    cash:    { freq: 1200,dur: 0.12, vol: 0.18, type: 'square',   slide: 400 },
+    pickup:  { freq: 700, dur: 0.14, vol: 0.2,  type: 'triangle', slide: 500 },
+    crash:   { freq: 120, dur: 0.4,  vol: 0.3,  type: 'sawtooth', slide: -40 },
+    coin:    { freq: 1320,dur: 0.1,  vol: 0.18, type: 'square',   slide: 200 },
+    victory: { freq: 523, dur: 0.6,  vol: 0.25, type: 'triangle', slide: 600 },
+  };
+  const p = presets[type] || presets.click;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = p.type;
+  osc.frequency.setValueAtTime(p.freq, now);
+  if (p.slide) osc.frequency.linearRampToValueAtTime(p.freq + p.slide, now + p.dur);
+  gain.gain.setValueAtTime(p.vol, now);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + p.dur);
+  osc.connect(gain).connect(sfxGain);
+  osc.start(now);
+  osc.stop(now + p.dur);
+}
 
-  for (let r = 0; r < ROWS; r++) {
-    for (let c = 0; c < COLS; c++) {
-      const t = MAP[r][c];
-      if (t === 1) walls.push({ x: c*TILE, y: r*TILE, w: TILE, h: TILE });
-      if (t === 2) cars.push({ x: c*TILE, y: r*TILE, color: C.carBody[(r*3+c)%5] });
-      if (t === 3) wrenches.push({ x: c*TILE, y: r*TILE, collected: false, bob: Math.random()*Math.PI*2, glow: 0 });
-      if (t === 4) exitPos = { x: c*TILE, y: r*TILE };
-      if (t === 5) desks.push({ x: c*TILE, y: r*TILE });
-      if (t === 6) oilStains.push({ x: c*TILE, y: r*TILE });
-      if (t === 7) tireStacks.push({ x: c*TILE, y: r*TILE });
+/* --- One-shot engine rev (works even without continuous engine running) --- */
+function engineRevOneShot() {
+  if (!audioCtx || !S.soundOn) return;
+  const t = audioCtx.currentTime;
+  const o = audioCtx.createOscillator(); o.type = 'sawtooth';
+  o.frequency.setValueAtTime(65, t);
+  o.frequency.exponentialRampToValueAtTime(180, t + 0.15);
+  o.frequency.exponentialRampToValueAtTime(90, t + 0.7);
+  const lp = audioCtx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 900;
+  const g = audioCtx.createGain();
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(0.28, t + 0.05);
+  g.gain.exponentialRampToValueAtTime(0.001, t + 0.75);
+  o.connect(lp).connect(g).connect(sfxGain);
+  o.start(t); o.stop(t + 0.8);
+}
+
+/* --- Dog: bark (3 quick yaps) and growl --- */
+function noiseBuffer(durSec, decay=1) {
+  const len = Math.max(1, Math.floor(audioCtx.sampleRate * durSec));
+  const buf = audioCtx.createBuffer(1, len, audioCtx.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) d[i] = (Math.random()*2 - 1) * Math.pow(1 - i/len, decay);
+  return buf;
+}
+function bark() {
+  if (!audioCtx || !S.soundOn) return;
+  [0, 0.16, 0.34].forEach(delay => {
+    const t = audioCtx.currentTime + delay;
+    // Pitched body
+    const osc = audioCtx.createOscillator();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(320, t);
+    osc.frequency.exponentialRampToValueAtTime(110, t + 0.1);
+    const g = audioCtx.createGain();
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(0.32, t + 0.008);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.14);
+    const lp = audioCtx.createBiquadFilter();
+    lp.type = 'lowpass'; lp.frequency.value = 1800;
+    osc.connect(lp).connect(g).connect(sfxGain);
+    osc.start(t); osc.stop(t + 0.16);
+    // Noise roughness
+    const src = audioCtx.createBufferSource();
+    src.buffer = noiseBuffer(0.14, 3);
+    const bp = audioCtx.createBiquadFilter();
+    bp.type = 'bandpass'; bp.frequency.value = 900; bp.Q.value = 2;
+    const ng = audioCtx.createGain();
+    ng.gain.setValueAtTime(0.18, t);
+    ng.gain.exponentialRampToValueAtTime(0.001, t + 0.14);
+    src.connect(bp).connect(ng).connect(sfxGain);
+    src.start(t);
+  });
+}
+function growl() {
+  if (!audioCtx || !S.soundOn) return;
+  const t = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  osc.type = 'sawtooth';
+  osc.frequency.value = 85;
+  const lfo = audioCtx.createOscillator();
+  lfo.type = 'sine';
+  lfo.frequency.value = 14;
+  const lfoG = audioCtx.createGain();
+  lfoG.gain.value = 18;
+  lfo.connect(lfoG).connect(osc.frequency);
+  const lp = audioCtx.createBiquadFilter();
+  lp.type = 'lowpass'; lp.frequency.value = 220;
+  const g = audioCtx.createGain();
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(0.26, t + 0.08);
+  g.gain.setValueAtTime(0.26, t + 0.7);
+  g.gain.exponentialRampToValueAtTime(0.001, t + 1.0);
+  osc.connect(lp).connect(g).connect(sfxGain);
+  osc.start(t); lfo.start(t);
+  osc.stop(t + 1.05); lfo.stop(t + 1.05);
+  // Noise layer
+  const src = audioCtx.createBufferSource();
+  src.buffer = noiseBuffer(0.9, 0.7);
+  const bp = audioCtx.createBiquadFilter();
+  bp.type = 'bandpass'; bp.frequency.value = 180; bp.Q.value = 3;
+  const ng = audioCtx.createGain();
+  ng.gain.setValueAtTime(0, t);
+  ng.gain.linearRampToValueAtTime(0.12, t + 0.1);
+  ng.gain.exponentialRampToValueAtTime(0.001, t + 0.95);
+  src.connect(bp).connect(ng).connect(sfxGain);
+  src.start(t);
+}
+
+/* --- Dog ambient loop: quiet background growls while Surcharge is nearby --- */
+let barkLoopTimer = null;
+function startDogLoop() {
+  if (barkLoopTimer || !audioCtx || !S.soundOn) return;
+  const tick = () => {
+    const dogScenes = ['meet','diag','mabel','bill','escape'];
+    if (!S.dogDistracted && S.soundOn && dogScenes.includes(S.scene)) {
+      if (Math.random() < 0.35) bark();
+      else growl();
     }
+    barkLoopTimer = setTimeout(tick, 5000 + Math.random()*6000);
+  };
+  barkLoopTimer = setTimeout(tick, 3500);
+}
+function stopDogLoop() {
+  if (barkLoopTimer) { clearTimeout(barkLoopTimer); barkLoopTimer = null; }
+}
+
+/* --- Continuous engine (starts on drive scene) --- */
+let engineNodes = null;
+function startEngine() {
+  if (!audioCtx || !S.soundOn || engineNodes) return;
+  const now = audioCtx.currentTime;
+  const o1 = audioCtx.createOscillator(); o1.type = 'sawtooth'; o1.frequency.value = 78;
+  const o2 = audioCtx.createOscillator(); o2.type = 'square';   o2.frequency.value = 80;
+  const lfo = audioCtx.createOscillator(); lfo.type = 'sine';   lfo.frequency.value = 16;
+  const lfoG = audioCtx.createGain(); lfoG.gain.value = 9;
+  lfo.connect(lfoG); lfoG.connect(o1.frequency); lfoG.connect(o2.frequency);
+  const lp = audioCtx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 700;
+  // Noise for rumble grit
+  const nsrc = audioCtx.createBufferSource();
+  const nBuf = audioCtx.createBuffer(1, audioCtx.sampleRate * 2, audioCtx.sampleRate);
+  const nd = nBuf.getChannelData(0);
+  for (let i = 0; i < nd.length; i++) nd[i] = (Math.random()*2-1) * 0.4;
+  nsrc.buffer = nBuf; nsrc.loop = true;
+  const nlp = audioCtx.createBiquadFilter(); nlp.type = 'lowpass'; nlp.frequency.value = 220;
+  const ng = audioCtx.createGain(); ng.gain.value = 0.08;
+  const g = audioCtx.createGain();
+  g.gain.setValueAtTime(0, now);
+  g.gain.linearRampToValueAtTime(0.18, now + 0.5);
+  o1.connect(lp); o2.connect(lp);
+  nsrc.connect(nlp).connect(ng).connect(g);
+  lp.connect(g).connect(sfxGain);
+  o1.start(now); o2.start(now); lfo.start(now); nsrc.start(now);
+  engineNodes = { o1, o2, lfo, nsrc, gain: g };
+}
+function revEngine() {
+  if (!engineNodes || !audioCtx) return;
+  const now = audioCtx.currentTime;
+  const targets = [engineNodes.o1, engineNodes.o2];
+  targets.forEach((osc, i) => {
+    osc.frequency.cancelScheduledValues(now);
+    osc.frequency.setValueAtTime(osc.frequency.value, now);
+    osc.frequency.exponentialRampToValueAtTime(200 + i*5, now + 0.12);
+    osc.frequency.exponentialRampToValueAtTime(78 + i*2, now + 0.7);
+  });
+  // Quick volume swell
+  engineNodes.gain.gain.cancelScheduledValues(now);
+  engineNodes.gain.gain.setValueAtTime(engineNodes.gain.gain.value, now);
+  engineNodes.gain.gain.linearRampToValueAtTime(0.3, now + 0.1);
+  engineNodes.gain.gain.linearRampToValueAtTime(0.18, now + 0.7);
+}
+function stopEngine() {
+  if (!engineNodes || !audioCtx) return;
+  const now = audioCtx.currentTime;
+  const n = engineNodes;
+  engineNodes = null;
+  n.gain.gain.cancelScheduledValues(now);
+  n.gain.gain.setValueAtTime(n.gain.gain.value, now);
+  n.gain.gain.linearRampToValueAtTime(0, now + 0.3);
+  setTimeout(() => {
+    try { n.o1.stop(); n.o2.stop(); n.lfo.stop(); n.nsrc.stop(); } catch(e) {}
+  }, 400);
+}
+
+/* --- Background music: 4 themes, generated in real time --- */
+const THEMES = {
+  // Sleazy lounge — sparse minor jazz vibe, Sal's lot
+  sals: {
+    bpm: 84, len: 16,
+    chords: [[220,261.63,329.63],[174.61,220,261.63],[146.83,220,293.66],[164.81,207.65,246.94]], // Am F Dm E
+    bass:   [110, 87.31, 73.42, 82.41],
+    lead:   [440, 523.25, 659.25, 523.25, 440, 392, 349.23, 392],
+    leadType: 'triangle', drums: 'swing',
+  },
+  // Hard-rock "jungle" style — heavy distorted power chords, stomping drums. Inspired by GnR vibe (not the actual song).
+  jungle: {
+    bpm: 116, len: 16,
+    // Power-chord style: root + 5th stack. D5 / C5 / Bb / A — classic hard rock motion
+    chords: [[146.83, 220, 293.66],[130.81, 196, 261.63],[116.54, 174.61, 233.08],[110, 164.81, 220]], // D, C, Bb, A
+    bass:   [73.42, 65.41, 58.27, 55],  // D A
+    // aggressive lead line — ascending into wailing high bend feel
+    lead:   [293.66, 440, 587.33, 659.25, 587.33, 440, 349.23, 293.66],
+    leadType: 'square', drums: 'rock', distort: true,
+  },
+  // Upbeat 16-bit racer — the Drive
+  drive: {
+    bpm: 148, len: 16,
+    chords: [[130.81,164.81,196],[196,246.94,293.66],[164.81,196,246.94],[174.61,220,261.63]], // C G Em F
+    bass:   [65.41, 98, 82.41, 87.31],
+    lead:   [523.25, 659.25, 783.99, 659.25, 587.33, 523.25, 659.25, 783.99],
+    leadType: 'square', drums: 'rock',
+  },
+  // Warm, hopeful — Up Front arrival + scorecard
+  upfront: {
+    bpm: 92, len: 16,
+    chords: [[196,246.94,293.66],[261.63,329.63,392],[220,277.18,329.63],[196,246.94,293.66]], // G C D G
+    bass:   [98, 130.81, 110, 98],
+    lead:   [392, 493.88, 587.33, 493.88, 440, 392, 493.88, 587.33],
+    leadType: 'sine', drums: 'soft',
+  },
+  // Mysterious intro
+  intro: {
+    bpm: 72, len: 16,
+    chords: [[174.61,220,261.63],[146.83,174.61,220],[130.81,164.81,196],[164.81,196,246.94]], // F Dm C Em
+    bass:   [87.31, 73.42, 65.41, 82.41],
+    lead:   [349.23, 440, 523.25, 440, 349.23, 329.63, 349.23, 293.66],
+    leadType: 'triangle', drums: 'none',
+  },
+};
+let musicTimer = null, musicStep = 0, currentTheme = null, musicVoices = [];
+function stopMusic() {
+  if (musicTimer) { clearTimeout(musicTimer); musicTimer = null; }
+  currentTheme = null;
+  // Natural decay — voices are short, they'll release on their own
+  musicVoices = [];
+}
+function playNote(freq, dur, type, vol, t) {
+  const osc = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  osc.type = type;
+  osc.frequency.value = freq;
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(vol, t + 0.02);
+  g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  osc.connect(g).connect(musicGain);
+  osc.start(t); osc.stop(t + dur + 0.05);
+}
+function playKick(t) {
+  const osc = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(140, t);
+  osc.frequency.exponentialRampToValueAtTime(42, t + 0.12);
+  g.gain.setValueAtTime(0.35, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+  osc.connect(g).connect(musicGain);
+  osc.start(t); osc.stop(t + 0.2);
+}
+function playHat(t, vol=0.07) {
+  const src = audioCtx.createBufferSource();
+  src.buffer = noiseBuffer(0.05, 2);
+  const hp = audioCtx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 7000;
+  const g = audioCtx.createGain(); g.gain.value = vol;
+  src.connect(hp).connect(g).connect(musicGain);
+  src.start(t);
+}
+function playSnare(t) {
+  const src = audioCtx.createBufferSource();
+  src.buffer = noiseBuffer(0.15, 3);
+  const bp = audioCtx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1800; bp.Q.value = 1;
+  const g = audioCtx.createGain(); g.gain.value = 0.18;
+  src.connect(bp).connect(g).connect(musicGain);
+  src.start(t);
+}
+function playMusic(themeName) {
+  if (!audioCtx || !S.soundOn) return;
+  if (currentTheme === themeName) return;
+  stopMusic();
+  currentTheme = themeName;
+  const theme = THEMES[themeName];
+  if (!theme) return;
+  const beatDur = 60 / theme.bpm;
+  musicStep = 0;
+
+  function step() {
+    if (!audioCtx || currentTheme !== themeName) return;
+    const t = audioCtx.currentTime + 0.01;
+    const stepIdx = musicStep;
+    const barIdx = Math.floor(stepIdx / 4) % theme.chords.length;
+    const beat = stepIdx % 4;
+
+    // Bass — every beat, alternating octave jump on beats 1/3
+    const bf = theme.bass[barIdx] * (beat === 2 ? 1.5 : 1);
+    playNote(bf, beatDur * 0.85, 'triangle', theme.distort ? 0.4 : 0.28, t);
+    if (theme.distort) {
+      // double bass with sawtooth an octave up for grit
+      playNote(bf * 2, beatDur * 0.5, 'sawtooth', 0.08, t);
+    }
+
+    // Chord pad — beats 0 and 2
+    if (beat === 0 || beat === 2) {
+      theme.chords[barIdx].forEach(f => {
+        if (theme.distort) {
+          // Thick power-chord stack: sawtooth + detuned sawtooth + square for grit
+          playNote(f, beatDur * 1.8, 'sawtooth', 0.09, t);
+          playNote(f * 1.004, beatDur * 1.8, 'sawtooth', 0.08, t);
+          playNote(f * 0.996, beatDur * 1.8, 'square', 0.06, t);
+        } else {
+          playNote(f, beatDur * 1.9, 'sawtooth', 0.055, t);
+        }
+      });
+      // Add a chugga-chugga 8th-note pulse for jungle
+      if (theme.distort) {
+        playNote(theme.chords[barIdx][0], beatDur * 0.3, 'sawtooth', 0.07, t + beatDur * 0.5);
+        playNote(theme.chords[barIdx][0], beatDur * 0.3, 'sawtooth', 0.07, t + beatDur * 1.5);
+      }
+    }
+
+    // Lead melody
+    const leadIdx = stepIdx % theme.lead.length;
+    playNote(theme.lead[leadIdx], beatDur * 0.7, theme.leadType, theme.distort ? 0.14 : 0.1, t);
+    if (theme.distort) {
+      // lead thickener — fifth above for power
+      playNote(theme.lead[leadIdx] * 1.498, beatDur * 0.7, 'square', 0.06, t);
+    }
+
+    // Drums
+    if (theme.drums === 'rock') {
+      if (beat === 0 || beat === 2) playKick(t);
+      if (beat === 1 || beat === 3) playSnare(t);
+      playHat(t, 0.05);
+      if (beat === 0) playHat(t + beatDur*0.5, 0.03);
+    } else if (theme.drums === 'swing') {
+      if (beat === 0) playKick(t);
+      if (beat === 2) playSnare(t);
+      if (beat === 1 || beat === 3) playHat(t, 0.04);
+    } else if (theme.drums === 'soft') {
+      if (beat === 0) playKick(t);
+      playHat(t, 0.025);
+    }
+
+    musicStep = (stepIdx + 1) % theme.len;
+    musicTimer = setTimeout(step, beatDur * 1000);
+  }
+  step();
+}
+
+function themeForScene(id) {
+  if (id === 'intro') return 'intro';
+  if (['meet','diag','mabel','bill'].includes(id)) return 'sals';
+  if (id === 'escape') return 'jungle';  // hard-rock style for the scavenger scene
+  if (id === 'drive') return 'drive';
+  if (id === 'upfront' || id === 'score') return 'upfront';
+  return null;
+}
+
+/* ===== SVG CHARACTERS ===== */
+const SVG = {
+  // Hot rod (same as cursor — the player's car)
+  hotrod: `<svg viewBox="0 0 120 70" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="60" cy="62" rx="50" ry="4" fill="#000" opacity=".35"/>
+    <rect x="14" y="35" width="10" height="4" rx="1.5" fill="#9aa0a8"/>
+    <path d="M 22 46 L 32 46 Q 38 46 42 40 L 72 40 Q 78 40 82 46 L 108 46 L 112 52 L 24 52 Z" fill="#d01a12" stroke="#000" stroke-width="2"/>
+    <path d="M 44 40 L 50 24 Q 54 21 62 21 L 72 21 Q 78 23 78 30 L 78 40 Z" fill="#ff2a18" stroke="#000" stroke-width="2"/>
+    <path d="M 52 26 L 72 26 L 74 38 L 51 38 Z" fill="#0a1020" stroke="#000" stroke-width="1.5"/>
+    <path d="M 34 44 Q 40 40 46 44 Q 52 40 58 44 Q 64 40 70 44" stroke="#ffd400" fill="none" stroke-width="2" stroke-linecap="round"/>
+    <rect x="82" y="34" width="12" height="8" rx="1" fill="#565a63" stroke="#000" stroke-width="1.5"/>
+    <rect x="84" y="28" width="2" height="7" fill="#e0e4ea"/>
+    <rect x="88" y="28" width="2" height="7" fill="#e0e4ea"/>
+    <rect x="92" y="28" width="2" height="7" fill="#e0e4ea"/>
+    <circle cx="110" cy="40" r="2.5" fill="#fff3a0"/>
+    <circle cx="38" cy="54" r="9" fill="#141416" stroke="#000" stroke-width="1.5"/>
+    <circle cx="38" cy="54" r="3.5" fill="#c8ccd2"/>
+    <circle cx="96" cy="56" r="12" fill="#141416" stroke="#000" stroke-width="1.5"/>
+    <circle cx="96" cy="56" r="5" fill="#c8ccd2"/>
+    <circle cx="96" cy="56" r="1.8" fill="#2a2e36"/>
+  </svg>`,
+
+  // Sal — the shady villain mechanic
+  sal: `<svg viewBox="0 0 200 280" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="salBody" x1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#c8b758"/>
+        <stop offset="100%" stop-color="#8a7c35"/>
+      </linearGradient>
+    </defs>
+    <!-- legs -->
+    <rect x="70" y="200" width="25" height="75" fill="url(#salBody)" stroke="#000" stroke-width="2.5"/>
+    <rect x="105" y="200" width="25" height="75" fill="url(#salBody)" stroke="#000" stroke-width="2.5"/>
+    <!-- boots -->
+    <ellipse cx="83" cy="275" rx="18" ry="6" fill="#3a2510" stroke="#000" stroke-width="2"/>
+    <ellipse cx="117" cy="275" rx="18" ry="6" fill="#3a2510" stroke="#000" stroke-width="2"/>
+    <!-- body coverall -->
+    <path d="M 50 100 Q 45 190 60 200 L 140 200 Q 155 190 150 100 Q 120 85 100 85 Q 80 85 50 100 Z" fill="url(#salBody)" stroke="#000" stroke-width="3"/>
+    <!-- stains -->
+    <ellipse cx="85" cy="150" rx="10" ry="6" fill="#3a2a10" opacity=".7"/>
+    <ellipse cx="120" cy="170" rx="8" ry="5" fill="#3a2a10" opacity=".6"/>
+    <!-- MECHANIC patch -->
+    <rect x="78" y="115" width="44" height="16" rx="2" fill="#fff" stroke="#000" stroke-width="2"/>
+    <text x="100" y="127" text-anchor="middle" font-family="Impact,sans-serif" font-size="10" fill="#000">MECHANIC</text>
+    <!-- gold chains -->
+    <path d="M 65 100 Q 100 115 135 100" fill="none" stroke="#fbbf24" stroke-width="3"/>
+    <path d="M 70 105 Q 100 125 130 105" fill="none" stroke="#fbbf24" stroke-width="2.5"/>
+    <circle cx="100" cy="118" r="5" fill="#fbbf24" stroke="#000" stroke-width="1.5"/>
+    <text x="100" y="122" text-anchor="middle" font-family="Impact" font-size="8" fill="#000">$</text>
+    <!-- arms -->
+    <path d="M 50 105 L 30 170 L 35 200 L 48 198 L 55 170 L 60 115" fill="url(#salBody)" stroke="#000" stroke-width="2.5"/>
+    <path d="M 150 105 L 170 170 L 168 200 L 180 195 L 180 170 L 145 115" fill="url(#salBody)" stroke="#000" stroke-width="2.5"/>
+    <!-- right hand holding clipboard -->
+    <rect x="165" y="175" width="28" height="36" rx="2" fill="#c8a050" stroke="#000" stroke-width="2"/>
+    <rect x="170" y="180" width="18" height="2" fill="#000"/>
+    <rect x="170" y="186" width="14" height="2" fill="#000"/>
+    <rect x="170" y="192" width="16" height="2" fill="#000"/>
+    <!-- left hand -->
+    <circle cx="32" cy="195" r="8" fill="#f4c28a" stroke="#000" stroke-width="2"/>
+    <!-- neck -->
+    <rect x="90" y="75" width="20" height="15" fill="#f4c28a" stroke="#000" stroke-width="2"/>
+    <!-- head -->
+    <ellipse cx="100" cy="55" rx="38" ry="40" fill="#f4c28a" stroke="#000" stroke-width="3"/>
+    <!-- bald top -->
+    <path d="M 62 45 Q 100 25 138 45" fill="#e0a970" stroke="#000" stroke-width="2" opacity=".5"/>
+    <!-- side hair -->
+    <path d="M 62 55 Q 55 70 65 80 L 70 80 Q 65 70 70 55" fill="#2a1a10" stroke="#000" stroke-width="2"/>
+    <path d="M 138 55 Q 145 70 135 80 L 130 80 Q 135 70 130 55" fill="#2a1a10" stroke="#000" stroke-width="2"/>
+    <!-- ears -->
+    <ellipse cx="62" cy="55" rx="5" ry="7" fill="#e0a970" stroke="#000" stroke-width="2"/>
+    <ellipse cx="138" cy="55" rx="5" ry="7" fill="#e0a970" stroke="#000" stroke-width="2"/>
+    <!-- dollar sign sunglasses -->
+    <rect x="65" y="45" width="70" height="14" rx="2" fill="#000"/>
+    <circle cx="80" cy="52" r="10" fill="#000" stroke="#000"/>
+    <circle cx="120" cy="52" r="10" fill="#000" stroke="#000"/>
+    <text x="80" y="56" text-anchor="middle" font-family="Impact" font-size="14" fill="#fbbf24">$</text>
+    <text x="120" y="56" text-anchor="middle" font-family="Impact" font-size="14" fill="#fbbf24">$</text>
+    <!-- nose -->
+    <path d="M 95 58 Q 100 70 105 58 L 105 72 Q 100 76 95 72 Z" fill="#e0a970" stroke="#000" stroke-width="2"/>
+    <!-- handlebar mustache -->
+    <path d="M 75 78 Q 65 72 55 76 Q 62 84 75 82 M 125 78 Q 135 72 145 76 Q 138 84 125 82" fill="#2a1a10" stroke="#000" stroke-width="2"/>
+    <!-- sneer mouth -->
+    <path d="M 85 85 Q 100 90 115 85" fill="none" stroke="#000" stroke-width="2.5"/>
+    <!-- gold tooth -->
+    <rect x="98" y="86" width="4" height="3" fill="#fbbf24"/>
+  </svg>`,
+
+  // "You" — the player (side view, generic driver)
+  you: `<svg viewBox="0 0 140 260" xmlns="http://www.w3.org/2000/svg">
+    <!-- legs -->
+    <rect x="45" y="180" width="22" height="70" fill="#1e3a5f" stroke="#000" stroke-width="2.5"/>
+    <rect x="70" y="180" width="22" height="70" fill="#1e3a5f" stroke="#000" stroke-width="2.5"/>
+    <!-- shoes -->
+    <ellipse cx="56" cy="252" rx="15" ry="5" fill="#222" stroke="#000" stroke-width="2"/>
+    <ellipse cx="81" cy="252" rx="15" ry="5" fill="#222" stroke="#000" stroke-width="2"/>
+    <!-- body -->
+    <path d="M 30 100 Q 28 180 45 185 L 95 185 Q 110 180 108 100 Q 95 85 70 85 Q 45 85 30 100 Z" fill="#ff6b1a" stroke="#000" stroke-width="3"/>
+    <!-- arms -->
+    <path d="M 30 105 L 18 170 L 28 180 L 38 175 L 40 115" fill="#ff6b1a" stroke="#000" stroke-width="2.5"/>
+    <path d="M 108 105 L 120 170 L 110 180 L 100 175 L 98 115" fill="#ff6b1a" stroke="#000" stroke-width="2.5"/>
+    <!-- hands -->
+    <circle cx="28" cy="178" r="7" fill="#f4c28a" stroke="#000" stroke-width="2"/>
+    <circle cx="110" cy="178" r="7" fill="#f4c28a" stroke="#000" stroke-width="2"/>
+    <!-- neck -->
+    <rect x="62" y="70" width="16" height="17" fill="#f4c28a" stroke="#000" stroke-width="2"/>
+    <!-- head -->
+    <circle cx="70" cy="50" r="32" fill="#f4c28a" stroke="#000" stroke-width="3"/>
+    <!-- hair -->
+    <path d="M 40 40 Q 50 15 70 18 Q 90 15 100 40 Q 95 30 70 30 Q 45 30 40 40 Z" fill="#4a3020" stroke="#000" stroke-width="2"/>
+    <!-- eyes -->
+    <circle cx="60" cy="50" r="3" fill="#000"/>
+    <circle cx="80" cy="50" r="3" fill="#000"/>
+    <!-- mouth (worried) -->
+    <path d="M 60 65 Q 70 62 80 65" fill="none" stroke="#000" stroke-width="2"/>
+  </svg>`,
+
+  // Jon — honest mechanic at Up Front (short-stature proportions: regular-size head, shorter limbs, longer torso)
+  jon: `<svg viewBox="0 0 160 280" xmlns="http://www.w3.org/2000/svg">
+    <!-- boots -->
+    <ellipse cx="66" cy="272" rx="16" ry="5" fill="#1a1010" stroke="#000" stroke-width="2"/>
+    <ellipse cx="94" cy="272" rx="16" ry="5" fill="#1a1010" stroke="#000" stroke-width="2"/>
+    <!-- legs (shorter: 45px instead of 75px) -->
+    <rect x="55" y="225" width="23" height="45" fill="#2a3a28" stroke="#000" stroke-width="2.5"/>
+    <rect x="82" y="225" width="23" height="45" fill="#2a3a28" stroke="#000" stroke-width="2.5"/>
+    <!-- denim shirt (longer torso to compensate) -->
+    <path d="M 35 110 Q 32 218 50 226 L 110 226 Q 130 218 125 110 Q 110 95 80 95 Q 50 95 35 110 Z" fill="#4f7bb8" stroke="#000" stroke-width="3"/>
+    <!-- denim details -->
+    <line x1="80" y1="95" x2="80" y2="226" stroke="#2a4a80" stroke-width="1" opacity=".4"/>
+    <line x1="55" y1="120" x2="105" y2="120" stroke="#2a4a80" stroke-width="1" opacity=".3"/>
+    <line x1="55" y1="165" x2="105" y2="165" stroke="#2a4a80" stroke-width="1" opacity=".3"/>
+    <!-- pocket -->
+    <rect x="90" y="125" width="22" height="20" fill="none" stroke="#000" stroke-width="1.5"/>
+    <!-- arms (shorter: hands reach to hip not below) -->
+    <path d="M 35 115 L 22 170 L 30 184 L 42 181 L 45 125" fill="#4f7bb8" stroke="#000" stroke-width="2.5"/>
+    <path d="M 125 115 L 140 170 L 130 184 L 118 181 L 115 125" fill="#4f7bb8" stroke="#000" stroke-width="2.5"/>
+    <!-- hands (oil-stained), at hip level -->
+    <circle cx="30" cy="181" r="8" fill="#d4a080" stroke="#000" stroke-width="2"/>
+    <circle cx="130" cy="181" r="8" fill="#d4a080" stroke="#000" stroke-width="2"/>
+    <circle cx="30" cy="181" r="2" fill="#3a2510"/>
+    <circle cx="133" cy="179" r="2" fill="#3a2510"/>
+    <!-- neck -->
+    <rect x="72" y="80" width="16" height="17" fill="#d4a080" stroke="#000" stroke-width="2"/>
+    <!-- head (same size — proportionally larger to body) -->
+    <circle cx="80" cy="55" r="34" fill="#d4a080" stroke="#000" stroke-width="3"/>
+    <!-- hair (brown, simple) -->
+    <path d="M 48 45 Q 55 20 80 20 Q 105 20 112 45 Q 105 32 80 32 Q 55 32 48 45" fill="#5a3818" stroke="#000" stroke-width="2"/>
+    <!-- beard stubble -->
+    <path d="M 55 70 Q 80 78 105 70 L 103 80 Q 80 85 57 80 Z" fill="#5a3818" opacity=".4"/>
+    <!-- eyes (kind) -->
+    <circle cx="68" cy="55" r="3" fill="#000"/>
+    <circle cx="92" cy="55" r="3" fill="#000"/>
+    <path d="M 62 48 Q 68 44 74 48 M 86 48 Q 92 44 98 48" fill="none" stroke="#000" stroke-width="1.5"/>
+    <!-- friendly smile -->
+    <path d="M 65 68 Q 80 78 95 68" fill="none" stroke="#000" stroke-width="2.5"/>
+    <!-- nose -->
+    <path d="M 78 58 L 82 58 L 82 66 Q 80 68 78 66 Z" fill="#b8805a" stroke="#000" stroke-width="1.5"/>
+    <!-- name tag -->
+    <rect x="93" y="108" width="28" height="14" rx="2" fill="#ff6b1a" stroke="#000" stroke-width="2"/>
+    <text x="107" y="118" text-anchor="middle" font-family="Arial Black" font-size="9" fill="#000">JON</text>
+  </svg>`,
+
+  // Mabel — wise customer
+  mabel: `<svg viewBox="0 0 140 260" xmlns="http://www.w3.org/2000/svg">
+    <rect x="48" y="185" width="20" height="70" fill="#3a2a50" stroke="#000" stroke-width="2.5"/>
+    <rect x="70" y="185" width="20" height="70" fill="#3a2a50" stroke="#000" stroke-width="2.5"/>
+    <ellipse cx="58" cy="257" rx="14" ry="4" fill="#222" stroke="#000" stroke-width="2"/>
+    <ellipse cx="80" cy="257" rx="14" ry="4" fill="#222" stroke="#000" stroke-width="2"/>
+    <!-- sweatshirt -->
+    <path d="M 30 100 Q 28 185 45 190 L 95 190 Q 110 185 108 100 Q 95 85 70 85 Q 45 85 30 100 Z" fill="#a855f7" stroke="#000" stroke-width="3"/>
+    <!-- text on sweatshirt -->
+    <text x="70" y="135" text-anchor="middle" font-family="Arial Black" font-size="11" fill="#fff">I ♥ HONEST</text>
+    <text x="70" y="150" text-anchor="middle" font-family="Arial Black" font-size="10" fill="#fff">MECHANICS</text>
+    <!-- arms holding coffee -->
+    <path d="M 30 105 L 22 160 L 30 180 L 42 175 L 42 115" fill="#a855f7" stroke="#000" stroke-width="2.5"/>
+    <path d="M 108 105 L 116 160 L 110 180 L 98 175 L 98 115" fill="#a855f7" stroke="#000" stroke-width="2.5"/>
+    <circle cx="28" cy="178" r="7" fill="#f4c28a" stroke="#000" stroke-width="2"/>
+    <!-- coffee cup in right hand -->
+    <rect x="95" y="168" width="18" height="20" fill="#e0e0e0" stroke="#000" stroke-width="2" rx="1"/>
+    <path d="M 113 173 Q 120 175 120 180 Q 120 185 113 185" fill="none" stroke="#000" stroke-width="2"/>
+    <path d="M 99 170 Q 100 165 101 170" stroke="#888" stroke-width="1" fill="none"/>
+    <!-- neck -->
+    <rect x="62" y="70" width="16" height="17" fill="#f4c28a" stroke="#000" stroke-width="2"/>
+    <!-- head -->
+    <circle cx="70" cy="50" r="32" fill="#f4c28a" stroke="#000" stroke-width="3"/>
+    <!-- gray hair bun -->
+    <path d="M 40 35 Q 45 15 70 18 Q 95 15 100 35 Q 90 25 70 25 Q 50 25 40 35" fill="#b8b8c0" stroke="#000" stroke-width="2"/>
+    <circle cx="70" cy="15" r="8" fill="#b8b8c0" stroke="#000" stroke-width="2"/>
+    <!-- glasses -->
+    <circle cx="60" cy="50" r="8" fill="none" stroke="#000" stroke-width="2"/>
+    <circle cx="80" cy="50" r="8" fill="none" stroke="#000" stroke-width="2"/>
+    <line x1="68" y1="50" x2="72" y2="50" stroke="#000" stroke-width="2"/>
+    <circle cx="60" cy="50" r="2" fill="#000"/>
+    <circle cx="80" cy="50" r="2" fill="#000"/>
+    <!-- knowing smirk -->
+    <path d="M 62 68 Q 72 72 80 66" fill="none" stroke="#000" stroke-width="2"/>
+  </svg>`,
+
+  // Bone icon
+  bone: `<svg viewBox="0 0 50 30" xmlns="http://www.w3.org/2000/svg"><path d="M 8 15 Q 3 10 8 7 Q 13 4 15 10 L 35 10 Q 37 4 42 7 Q 47 10 42 15 Q 47 20 42 23 Q 37 26 35 20 L 15 20 Q 13 26 8 23 Q 3 20 8 15 Z" fill="#f5e6d3" stroke="#000" stroke-width="2"/></svg>`,
+
+  // Wrench
+  wrench: `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><path d="M 12 8 L 20 8 L 20 16 L 14 22 L 20 28 L 28 28 L 48 48 Q 52 52 48 56 L 44 52 L 24 32 L 24 20 L 12 16 Z" fill="#9aa0a8" stroke="#000" stroke-width="2.5"/><circle cx="16" cy="12" r="2" fill="#000"/></svg>`,
+
+  // Spark plug
+  sparkPlug: `<svg viewBox="0 0 40 60" xmlns="http://www.w3.org/2000/svg"><rect x="14" y="4" width="12" height="10" fill="#2a3a48" stroke="#000" stroke-width="2"/><rect x="10" y="14" width="20" height="18" fill="#e0e4ea" stroke="#000" stroke-width="2"/><text x="20" y="26" text-anchor="middle" font-family="Impact" font-size="9" fill="#000">NGK</text><rect x="14" y="32" width="12" height="18" fill="#9aa0a8" stroke="#000" stroke-width="2"/><path d="M 14 36 L 26 36 M 14 40 L 26 40 M 14 44 L 26 44" stroke="#000" stroke-width="1"/><rect x="17" y="50" width="6" height="6" fill="#9aa0a8" stroke="#000" stroke-width="1.5"/></svg>`,
+
+  // Air filter
+  airFilter: `<svg viewBox="0 0 60 50" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="6" width="52" height="38" rx="3" fill="#f0c060" stroke="#000" stroke-width="2.5"/><path d="M 10 10 L 10 40 M 16 10 L 16 40 M 22 10 L 22 40 M 28 10 L 28 40 M 34 10 L 34 40 M 40 10 L 40 40 M 46 10 L 46 40 M 52 10 L 52 40" stroke="#8a6a30" stroke-width="1"/><rect x="4" y="6" width="52" height="38" rx="3" fill="none" stroke="#8a6a30" stroke-width="1" stroke-dasharray="3 2"/></svg>`,
+
+  // Dollar bill
+  dollar: `<svg viewBox="0 0 60 30" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="2" width="56" height="26" rx="1.5" fill="#85b970" stroke="#000" stroke-width="2"/><circle cx="30" cy="15" r="7" fill="none" stroke="#2a4a28" stroke-width="1.5"/><text x="30" y="19" text-anchor="middle" font-family="Impact" font-size="10" fill="#2a4a28">$</text><text x="9" y="11" font-family="Impact" font-size="6" fill="#2a4a28">1</text><text x="48" y="25" font-family="Impact" font-size="6" fill="#2a4a28">1</text></svg>`,
+
+  // Rag
+  rag: `<svg viewBox="0 0 50 40" xmlns="http://www.w3.org/2000/svg"><path d="M 5 18 Q 10 8 22 10 Q 30 6 40 12 Q 46 22 42 32 Q 30 38 18 34 Q 8 32 5 18 Z" fill="#d06b4a" stroke="#000" stroke-width="2"/><path d="M 14 14 L 20 20 M 26 12 L 30 18 M 32 24 L 38 28 M 14 28 L 20 32" stroke="#802a14" stroke-width="1.2" opacity=".6"/></svg>`,
+
+  // Coffee mug
+  mug: `<svg viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg"><rect x="8" y="14" width="26" height="28" rx="2" fill="#e8e0d4" stroke="#000" stroke-width="2.5"/><path d="M 34 20 Q 42 22 42 30 Q 42 38 34 36" fill="none" stroke="#000" stroke-width="2.5"/><ellipse cx="21" cy="16" rx="12" ry="2.5" fill="#3a2010" stroke="#000" stroke-width="1.5"/><text x="21" y="32" text-anchor="middle" font-family="Impact" font-size="8" fill="#c41818">#1 SCAM</text><path d="M 12 10 Q 14 6 16 10 M 20 8 Q 22 4 24 8 M 28 10 Q 30 6 32 10" stroke="#aaa" stroke-width="1" fill="none" opacity=".7"/></svg>`,
+
+  // Cash register
+  cashReg: `<svg viewBox="0 0 80 60" xmlns="http://www.w3.org/2000/svg"><rect x="5" y="32" width="70" height="22" fill="#6b6a68" stroke="#000" stroke-width="2.5" rx="2"/><rect x="10" y="10" width="60" height="24" fill="#8a8885" stroke="#000" stroke-width="2.5" rx="2"/><rect x="14" y="14" width="52" height="10" fill="#f0eee0" stroke="#000" stroke-width="1.5"/><text x="40" y="22" text-anchor="middle" font-family="Impact" font-size="8" fill="#000">$$$$.$$</text><rect x="16" y="38" width="6" height="4" fill="#ef4444"/><rect x="24" y="38" width="6" height="4" fill="#22c55e"/><rect x="32" y="38" width="6" height="4" fill="#fbbf24"/><rect x="40" y="38" width="6" height="4" fill="#3b82f6"/><rect x="48" y="38" width="6" height="4" fill="#a855f7"/><rect x="56" y="38" width="6" height="4" fill="#ef4444"/><rect x="16" y="46" width="46" height="4" fill="#333"/></svg>`,
+
+  // Parts bin
+  partsBin: `<svg viewBox="0 0 80 60" xmlns="http://www.w3.org/2000/svg"><path d="M 8 18 L 72 18 L 66 54 L 14 54 Z" fill="#3a3a40" stroke="#000" stroke-width="2.5"/><rect x="6" y="14" width="68" height="8" fill="#4a4a50" stroke="#000" stroke-width="2"/><circle cx="22" cy="34" r="5" fill="#9aa0a8" stroke="#000" stroke-width="1.5"/><rect x="34" y="30" width="10" height="8" fill="#c8ad6a" stroke="#000" stroke-width="1.5"/><path d="M 52 38 L 60 30 L 62 32 L 54 40 Z" fill="#d06b4a" stroke="#000" stroke-width="1.5"/><text x="40" y="50" text-anchor="middle" font-family="Impact" font-size="7" fill="#fbbf24">PARTS</text></svg>`,
+
+  // Dog bowl
+  bowl: `<svg viewBox="0 0 70 40" xmlns="http://www.w3.org/2000/svg"><ellipse cx="35" cy="36" rx="30" ry="3" fill="#000" opacity=".3"/><path d="M 5 18 Q 5 34 35 34 Q 65 34 65 18 Z" fill="#c41818" stroke="#000" stroke-width="2.5"/><ellipse cx="35" cy="18" rx="30" ry="6" fill="#ef4444" stroke="#000" stroke-width="2.5"/><text x="35" y="21" text-anchor="middle" font-family="Impact" font-size="8" fill="#fff">SURCHARGE</text></svg>`,
+
+  // Workbench with tools
+  bench: `<svg viewBox="0 0 120 70" xmlns="http://www.w3.org/2000/svg"><rect x="5" y="30" width="110" height="10" fill="#8a6030" stroke="#000" stroke-width="2"/><rect x="10" y="40" width="8" height="28" fill="#6b4820" stroke="#000" stroke-width="2"/><rect x="102" y="40" width="8" height="28" fill="#6b4820" stroke="#000" stroke-width="2"/><!-- pegboard --><rect x="5" y="4" width="110" height="26" fill="#b8b0a0" stroke="#000" stroke-width="2"/><circle cx="20" cy="10" r="1.2" fill="#000"/><circle cx="30" cy="10" r="1.2" fill="#000"/><circle cx="40" cy="10" r="1.2" fill="#000"/><!-- hammer --><rect x="15" y="18" width="3" height="10" fill="#6b3818" stroke="#000" stroke-width="1"/><rect x="11" y="14" width="11" height="6" fill="#666" stroke="#000" stroke-width="1"/><!-- wrench --><path d="M 40 14 L 44 14 L 44 20 L 48 24 L 54 30 L 52 32 L 46 26 L 42 22 L 40 22 Z" fill="#9aa0a8" stroke="#000" stroke-width="1"/><!-- screwdriver --><rect x="68" y="14" width="2" height="14" fill="#888" stroke="#000" stroke-width="0.8"/><rect x="65" y="10" width="8" height="6" fill="#ef4444" stroke="#000" stroke-width="1" rx="1"/><!-- pliers --><path d="M 88 16 L 90 22 L 88 26 M 94 16 L 92 22 L 94 26" stroke="#555" stroke-width="2" fill="none"/><rect x="85" y="22" width="12" height="4" fill="#555" stroke="#000" stroke-width="1"/></svg>`,
+
+  // Sign (bankruptcy)
+  bankruptcySign: `<svg viewBox="0 0 140 60" xmlns="http://www.w3.org/2000/svg"><rect x="5" y="5" width="130" height="50" fill="#fff" stroke="#000" stroke-width="2.5" rx="2"/><text x="70" y="28" text-anchor="middle" font-family="Impact" font-size="14" fill="#b91c1c">BANKRUPTCY</text><text x="70" y="45" text-anchor="middle" font-family="Impact" font-size="14" fill="#b91c1c">SALE</text></svg>`,
+
+  // Keys icon
+  keys: `<svg viewBox="0 0 50 30" xmlns="http://www.w3.org/2000/svg"><circle cx="10" cy="15" r="7" fill="none" stroke="#fbbf24" stroke-width="3"/><rect x="16" y="13" width="22" height="4" fill="#fbbf24" stroke="#000" stroke-width="1.5"/><rect x="32" y="13" width="3" height="8" fill="#fbbf24" stroke="#000" stroke-width="1.5"/><rect x="37" y="13" width="3" height="6" fill="#fbbf24" stroke="#000" stroke-width="1.5"/></svg>`,
+
+  // Toolbox
+  toolbox: `<svg viewBox="0 0 80 60" xmlns="http://www.w3.org/2000/svg"><rect x="5" y="20" width="70" height="35" fill="#ef4444" stroke="#000" stroke-width="2.5" rx="3"/><rect x="15" y="10" width="50" height="15" fill="#ef4444" stroke="#000" stroke-width="2.5" rx="2"/><rect x="30" y="6" width="20" height="8" fill="#fbbf24" stroke="#000" stroke-width="2" rx="2"/><rect x="5" y="32" width="70" height="3" fill="#000"/></svg>`,
+
+  // Tire pile
+  tires: `<svg viewBox="0 0 100 80" xmlns="http://www.w3.org/2000/svg"><circle cx="30" cy="55" r="22" fill="#1a1a1a" stroke="#000" stroke-width="2"/><circle cx="30" cy="55" r="10" fill="#3a3a3a" stroke="#000" stroke-width="1.5"/><circle cx="65" cy="55" r="22" fill="#1a1a1a" stroke="#000" stroke-width="2"/><circle cx="65" cy="55" r="10" fill="#3a3a3a" stroke="#000" stroke-width="1.5"/><circle cx="47" cy="25" r="22" fill="#1a1a1a" stroke="#000" stroke-width="2"/><circle cx="47" cy="25" r="10" fill="#3a3a3a" stroke="#000" stroke-width="1.5"/></svg>`,
+
+  // Drawer
+  drawer: `<svg viewBox="0 0 100 80" xmlns="http://www.w3.org/2000/svg"><rect x="5" y="10" width="90" height="65" fill="#6b4820" stroke="#000" stroke-width="2.5" rx="3"/><rect x="10" y="18" width="80" height="16" fill="#8a6030" stroke="#000" stroke-width="2"/><rect x="10" y="38" width="80" height="16" fill="#8a6030" stroke="#000" stroke-width="2"/><rect x="10" y="58" width="80" height="12" fill="#8a6030" stroke="#000" stroke-width="2"/><circle cx="50" cy="26" r="2" fill="#fbbf24" stroke="#000" stroke-width="1"/><circle cx="50" cy="46" r="2" fill="#fbbf24" stroke="#000" stroke-width="1"/></svg>`,
+
+  // Dog (Surcharge)
+  dog: `<svg viewBox="0 0 100 80" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="50" cy="75" rx="40" ry="4" fill="#000" opacity=".3"/>
+    <!-- body -->
+    <ellipse cx="55" cy="55" rx="28" ry="18" fill="#c8a878" stroke="#000" stroke-width="2.5"/>
+    <!-- legs -->
+    <rect x="40" y="60" width="6" height="15" fill="#c8a878" stroke="#000" stroke-width="2"/>
+    <rect x="60" y="60" width="6" height="15" fill="#c8a878" stroke="#000" stroke-width="2"/>
+    <rect x="75" y="62" width="5" height="13" fill="#c8a878" stroke="#000" stroke-width="2"/>
+    <rect x="30" y="62" width="5" height="13" fill="#c8a878" stroke="#000" stroke-width="2"/>
+    <!-- head -->
+    <circle cx="25" cy="45" r="16" fill="#c8a878" stroke="#000" stroke-width="2.5"/>
+    <!-- ear -->
+    <path d="M 15 33 Q 10 20 18 22 Q 25 30 20 40 Z" fill="#a88858" stroke="#000" stroke-width="2"/>
+    <!-- snout -->
+    <ellipse cx="15" cy="50" rx="9" ry="6" fill="#d8b888" stroke="#000" stroke-width="2"/>
+    <!-- nose -->
+    <ellipse cx="10" cy="48" rx="3" ry="2" fill="#000"/>
+    <!-- one eye (patch over other) -->
+    <circle cx="25" cy="42" r="3" fill="#000"/>
+    <path d="M 18 38 Q 22 34 28 38 L 28 44 Q 22 42 18 44 Z" fill="#5a3a20" stroke="#000" stroke-width="1.5"/>
+    <!-- growl / teeth -->
+    <path d="M 8 52 L 12 55 L 16 52 L 20 55 L 20 58 L 8 58 Z" fill="#fff" stroke="#000" stroke-width="1.5"/>
+    <!-- tail (down/angry) -->
+    <path d="M 82 50 Q 92 55 88 65" stroke="#000" fill="none" stroke-width="5" stroke-linecap="round"/>
+    <path d="M 82 50 Q 92 55 88 65" stroke="#c8a878" fill="none" stroke-width="3" stroke-linecap="round"/>
+  </svg>`,
+
+  // Dog happy (for after bone)
+  dogHappy: `<svg viewBox="0 0 100 80" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="50" cy="75" rx="40" ry="4" fill="#000" opacity=".3"/>
+    <ellipse cx="55" cy="55" rx="28" ry="18" fill="#c8a878" stroke="#000" stroke-width="2.5"/>
+    <rect x="40" y="60" width="6" height="15" fill="#c8a878" stroke="#000" stroke-width="2"/>
+    <rect x="60" y="60" width="6" height="15" fill="#c8a878" stroke="#000" stroke-width="2"/>
+    <rect x="75" y="62" width="5" height="13" fill="#c8a878" stroke="#000" stroke-width="2"/>
+    <rect x="30" y="62" width="5" height="13" fill="#c8a878" stroke="#000" stroke-width="2"/>
+    <circle cx="25" cy="45" r="16" fill="#c8a878" stroke="#000" stroke-width="2.5"/>
+    <path d="M 15 33 Q 10 20 18 22 Q 25 30 20 40 Z" fill="#a88858" stroke="#000" stroke-width="2"/>
+    <ellipse cx="15" cy="50" rx="9" ry="6" fill="#d8b888" stroke="#000" stroke-width="2"/>
+    <ellipse cx="10" cy="48" rx="3" ry="2" fill="#000"/>
+    <path d="M 22 40 L 28 40 M 23 40 L 27 42" stroke="#000" stroke-width="2" fill="none"/>
+    <!-- tongue -->
+    <ellipse cx="8" cy="56" rx="4" ry="3" fill="#f08080" stroke="#000" stroke-width="1.5"/>
+    <!-- wagging tail -->
+    <path d="M 82 50 Q 95 45 92 35" stroke="#000" fill="none" stroke-width="5" stroke-linecap="round">
+      <animateTransform attributeName="transform" type="rotate" from="-15 82 50" to="15 82 50" dur="0.3s" repeatCount="indefinite" values="-15 82 50; 15 82 50; -15 82 50" keyTimes="0;0.5;1"/>
+    </path>
+    <path d="M 82 50 Q 95 45 92 35" stroke="#c8a878" fill="none" stroke-width="3" stroke-linecap="round"/>
+  </svg>`,
+
+  // Door
+  door: `<svg viewBox="0 0 80 120" xmlns="http://www.w3.org/2000/svg"><rect x="5" y="5" width="70" height="110" fill="#6b3818" stroke="#000" stroke-width="3" rx="2"/><rect x="15" y="15" width="50" height="30" fill="#8a4828" stroke="#000" stroke-width="2"/><rect x="15" y="55" width="50" height="50" fill="#8a4828" stroke="#000" stroke-width="2"/><circle cx="60" cy="65" r="3" fill="#fbbf24" stroke="#000" stroke-width="1"/><text x="40" y="75" text-anchor="middle" font-family="Bungee" font-size="10" fill="#f5e6d3">EXIT</text></svg>`,
+};
+
+/* ===== UTILS ===== */
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+
+function setScene(id) {
+  $$('.scene').forEach(sc => sc.classList.remove('active'));
+  setTimeout(() => {
+    $('#scene-' + id).classList.add('active');
+    S.scene = id;
+    window.scrollTo(0, 0);
+  }, 50);
+  sfx('click');
+}
+
+function transition(next, delay=400) {
+  $('#fade').classList.add('show');
+  setTimeout(() => {
+    setScene(next);
+    setTimeout(() => $('#fade').classList.remove('show'), 50);
+  }, delay);
+}
+
+/* Create dust motes */
+function spawnDust(containerId, count=14) {
+  const c = $('#' + containerId);
+  if (!c || c.children.length) return;
+  for (let i = 0; i < count; i++) {
+    const d = document.createElement('span');
+    d.style.left = Math.random()*100 + '%';
+    d.style.animationDelay = Math.random()*8 + 's';
+    d.style.animationDuration = (6 + Math.random()*4) + 's';
+    c.appendChild(d);
   }
 }
 
-// ─── INPUT ─────────────────────────────────────────────────────────────────────
-window.addEventListener('keydown', e => {
-  keysPressed[e.code] = true;
-  if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code)) e.preventDefault();
+/* ===== HUD ===== */
+function updateHud() {
+  if (S.scene === 'diag' || S.scene === 'bill' || S.scene === 'escape' || S.scene === 'drive') {
+    $('#hud-money').style.display = 'flex';
+    $('#hud-money-val').textContent = '$' + S.billDisputed.toLocaleString();
+  } else {
+    $('#hud-money').style.display = 'none';
+  }
+  if (S.scene === 'diag') {
+    $('#hud-lies').style.display = 'flex';
+    $('#hud-lies-val').textContent = S.liesCaught;
+  } else {
+    $('#hud-lies').style.display = 'none';
+  }
+}
+
+/* ===== INTRO ===== */
+$('#intro-car').innerHTML = SVG.hotrod;
+$('#start-btn').addEventListener('click', () => {
+  initAudio();
+  S.startTime = Date.now();
+  sfx('engine');
+  transition('meet');
 });
-window.addEventListener('keyup', e => { keysPressed[e.code] = false; });
 
-// ─── PHYSICS / COLLISION ───────────────────────────────────────────────────────
-function rectCollide(ax,ay,aw,ah,bx,by,bw,bh) {
-  return ax < bx+bw && ax+aw > bx && ay < by+bh && ay+ah > by;
-}
-function isSolid(x,y) {
-  const c = Math.floor(x/TILE), r = Math.floor(y/TILE);
-  if (c<0||c>=COLS||r<0||r>=ROWS) return true;
-  return MAP[r][c] === 1;
-}
-function canMove(x,y,w,h) {
-  const margin = 2;
-  return !isSolid(x+margin,y+margin) && !isSolid(x+w-margin,y+margin)
-      && !isSolid(x+margin,y+h-margin) && !isSolid(x+w-margin,y+h-margin);
-}
+/* ===== MEET SAL ===== */
+$('#sal-char-1').innerHTML = SVG.sal;
+$('#you-char').innerHTML = SVG.you;
 
-// ─── SPAWN PARTICLES ──────────────────────────────────────────────────────────
-function spawnParticles(x,y,color,count=8) {
-  for (let i=0;i<count;i++) {
-    const angle = Math.random()*Math.PI*2;
-    const speed = 1+Math.random()*3;
-    particles.push({ x, y, vx: Math.cos(angle)*speed, vy: Math.sin(angle)*speed, life: 1, color, size: 3+Math.random()*4 });
+const meetDialogs = {
+  'meet-1': {
+    speaker: 'SAL SNEAKERTON',
+    text: `Well well WELL. Another customer at Sal's Super Save Auto &amp; Bait Shop! Come to the right place, friend. What seems to be the problem?`,
+    choices: [{ text: `"My car made a weird noise."`, next: 'meet-2' }]
+  },
+  'meet-2': {
+    speaker: 'SAL SNEAKERTON',
+    text: `A weird noise?! Buddy. I don't wanna alarm ya, but that's... that's usually a sign of SEVERE mechanical failure. Lemme pop the hood. This is gonna take a minute. Or ten minutes. Or maybe a whole new engine, who knows.`,
+    choices: [{ text: `"...uh. Okay."`, next: 'meet-3' }]
+  },
+  'meet-3': {
+    speaker: 'SAL SNEAKERTON',
+    text: `Great news, friend — I've prepared a COMPLETE diagnostic. Now, when I list off each problem, you just tell me if it sounds right to ya. Honest shop! No upsells here!`,
+    choices: [{ text: `"I'm ready. Show me what you've got."`, next: 'diag-start' }]
   }
+};
+
+function renderMeetDialog(id) {
+  const d = meetDialogs[id];
+  $('#meet-speaker').textContent = d.speaker;
+  $('#meet-text').innerHTML = d.text;
+  const cs = $('#meet-choices');
+  cs.innerHTML = '';
+  d.choices.forEach(c => {
+    const b = document.createElement('button');
+    b.className = 'btn';
+    b.textContent = c.text;
+    b.addEventListener('click', () => {
+      sfx('click');
+      if (c.next === 'diag-start') {
+        startDiagnosis();
+      } else {
+        renderMeetDialog(c.next);
+      }
+    });
+    cs.appendChild(b);
+  });
+  $('#sal-char-1').classList.add('talking');
 }
 
-// ─── UPDATE ───────────────────────────────────────────────────────────────────
-function update(dt) {
-  if (!gameRunning || gameOver) return;
+/* ===== DIAGNOSIS (SPOT THE LIE) ===== */
+const DIAGNOSES = [
+  { text: 'Your brake pads are worn down.',                    price: '$220', real: true  },
+  { text: 'Your BLINKER FLUID is contaminated.',               price: '$89',  real: false },
+  { text: 'Your MUFFLER BEARINGS are seized up.',              price: '$340', real: false },
+  { text: 'Your battery is getting weak.',                     price: '$180', real: true  },
+  { text: 'Your JOHNSON ROD is completely misaligned.',        price: '$180', real: false },
+  { text: 'Your HEADLIGHT WIPERS need recalibration.',         price: '$120', real: false },
+  { text: 'Your cabin air filter is dirty.',                   price: '$60',  real: true  },
+  { text: 'Your coolant is the WRONG SHADE OF GREEN.',         price: '$200', real: false },
+  { text: 'Your gas cap seems a little loose.',                price: '$15',  real: true  },
+  { text: 'Your engine sticker is peeling — ENTIRE new engine needed.', price: '$3,200', real: false },
+];
+let diagIndex = 0;
+let diagTimer = null;
+let diagResolved = false;
+S.totalFake = DIAGNOSES.filter(d => !d.real).length;
 
-  // Timer
-  gameTime -= dt;
-  if (gameTime <= 0) { gameTime = 0; endGame(false); return; }
+function startDiagnosis() {
+  setScene('diag');
+  $('#sal-stage-diag').innerHTML = SVG.sal;
+  diagIndex = 0;
+  S.liesCaught = 0;
+  S.liesMissed = 0;
+  S.realMissed = 0;
+  // render progress dots
+  const dots = $('#progress-dots');
+  dots.innerHTML = '';
+  DIAGNOSES.forEach(() => {
+    const d = document.createElement('div');
+    d.className = 'dot';
+    dots.appendChild(d);
+  });
+  nextDiagnosis();
+}
 
-  // Player movement
-  const speed = 160;
-  let dx = 0, dy = 0;
-  if (keysPressed['ArrowLeft'] || keysPressed['KeyA']) dx = -1;
-  if (keysPressed['ArrowRight'] || keysPressed['KeyD']) dx = 1;
-  if (keysPressed['ArrowUp'] || keysPressed['KeyW']) dy = -1;
-  if (keysPressed['ArrowDown'] || keysPressed['KeyS']) dy = 1;
-
-  if (dx !== 0 || dy !== 0) {
-    player.dir = dx === 1 ? 0 : dx === -1 ? 2 : dy === -1 ? 3 : 1;
-    const nx = player.x + dx * speed * dt;
-    const ny = player.y + dy * speed * dt;
-    const pw = TILE - 8, ph = TILE - 4;
-    const pox = player.x + 4, poy = player.y + 2;
-    const pnx = nx + 4, pny = ny + 2;
-    if (canMove(pnx, pox, pw, ph)) player.x = Math.max(4, Math.min(W - TILE + 4, nx));
-    if (canMove(pnx, pny, pw, ph)) player.y = Math.max(4, Math.min(H - TILE + 2, ny));
-    player.walk += dt * 10;
-    player.frame = Math.floor(player.walk) % 4;
+function nextDiagnosis() {
+  if (diagIndex >= DIAGNOSES.length) {
+    endDiagnosis();
+    return;
   }
-
-  // Wrench collection
-  for (const w of wrenches) {
-    if (!w.collected && rectCollide(player.x, player.y, TILE, TILE, w.x, w.y, TILE, TILE)) {
-      w.collected = true;
-      w.glow = 1;
-      keys++;
-      score += 100;
-      spawnParticles(w.x + TILE/2, w.y + TILE/2, C.wrench, 15);
-      screenShake = 5;
+  diagResolved = false;
+  const d = DIAGNOSES[diagIndex];
+  $('#diag-count').textContent = `${diagIndex+1} of ${DIAGNOSES.length}`;
+  $('#diag-problem').innerHTML = d.text;
+  $('#diag-price').textContent = d.price;
+  $('#diag-problem').style.opacity = 0;
+  setTimeout(() => { $('#diag-problem').style.opacity = 1; }, 100);
+  // progress dots current
+  const dots = $$('#progress-dots .dot');
+  dots.forEach((dot, i) => {
+    dot.classList.remove('current');
+    if (i === diagIndex) dot.classList.add('current');
+  });
+  // timer
+  let t = 8;
+  $('#diag-timer').textContent = t;
+  clearInterval(diagTimer);
+  diagTimer = setInterval(() => {
+    t--;
+    $('#diag-timer').textContent = t;
+    if (t <= 0) {
+      clearInterval(diagTimer);
+      if (!diagResolved) resolveDiag(null);
     }
+  }, 1000);
+  updateHud();
+}
+
+function resolveDiag(playerChoice) {
+  if (diagResolved) return;
+  diagResolved = true;
+  clearInterval(diagTimer);
+  const d = DIAGNOSES[diagIndex];
+  const fb = $('#diag-feedback');
+  const dots = $$('#progress-dots .dot');
+  // playerChoice: true = "YES, real problem". false = "NO, he's lying". null = timeout.
+  // Correct when playerChoice matches d.real (true+real, or false+fake).
+  if (playerChoice === null) {
+    // ran out of time
+    if (!d.real) S.liesMissed++; else S.realMissed++;
+    fb.textContent = 'TIME!';
+    fb.className = 'feedback bad show';
+    sfx('bad');
+    dots[diagIndex].classList.add('done-bad');
+  } else if (playerChoice === d.real) {
+    // correct answer: matched reality
+    if (!d.real) S.liesCaught++;  // busted a lie
+    fb.textContent = d.real ? 'CORRECT!' : 'BUSTED!';
+    fb.className = 'feedback good show';
+    sfx('good');
+    dots[diagIndex].classList.add('done-good');
+  } else {
+    // wrong
+    if (!d.real) S.liesMissed++; else S.realMissed++;
+    fb.textContent = d.real ? 'OOPS! THAT WAS REAL.' : "NOPE! HE'S LYING.";
+    fb.className = 'feedback bad show';
+    sfx('bad');
+    dots[diagIndex].classList.add('done-bad');
+  }
+  setTimeout(() => { fb.className = 'feedback'; }, 900);
+  diagIndex++;
+  setTimeout(nextDiagnosis, 1100);
+}
+
+$('#btn-real').addEventListener('click', () => resolveDiag(true));
+$('#btn-fake').addEventListener('click', () => resolveDiag(false));
+document.addEventListener('keydown', (e) => {
+  if (S.scene === 'diag' && !diagResolved) {
+    if (e.key === 'ArrowLeft' || e.key === 'r' || e.key === 'R') resolveDiag(true);
+    if (e.key === 'ArrowRight' || e.key === 'f' || e.key === 'F') resolveDiag(false);
+  }
+});
+
+function endDiagnosis() {
+  transition('mabel', 600);
+}
+
+/* ===== MABEL TIP ===== */
+$('#mabel-char').innerHTML = SVG.mabel;
+$('#mabel-continue').addEventListener('click', () => {
+  sfx('click');
+  transition('bill');
+});
+
+/* ===== THE BILL ===== */
+const BILL_ITEMS = [
+  { label: 'Blinker fluid replacement',                 price: 89,   bogus: true },
+  { label: 'Muffler bearing rebuild',                   price: 340,  bogus: true },
+  { label: 'Johnson rod realignment',                   price: 180,  bogus: true },
+  { label: 'Headlight wiper recalibration',             price: 120,  bogus: true },
+  { label: 'Coolant color correction',                  price: 200,  bogus: true },
+  { label: 'Brake pad inspection fee',                  price: 89,   bogus: true, note: '(we just looked at them)' },
+  { label: 'Diagnostic computer "interpretation" fee',  price: 150,  bogus: true },
+  { label: 'Battery test fee',                          price: 45,   bogus: true, note: '(it lit up, $45 please)' },
+  { label: 'Cabin air filter replacement',              price: 85,   bogus: false, note: '(real, but overpriced)' },
+  { label: 'Complete engine replacement',               price: 3200, bogus: true, note: '(for a PEELING STICKER)' },
+  { label: 'Environmental disposal fee',                price: 89,   bogus: true },
+  { label: 'Shop supplies surcharge',                   price: 89,   bogus: true },
+  { label: 'Handshake fee',                             price: 30,   bogus: true },
+  { label: 'TAX & "fees"',                              price: 141,  bogus: true },
+];
+
+function renderBill() {
+  const c = $('#bill-items');
+  c.innerHTML = '';
+  S.billTotal = BILL_ITEMS.reduce((a, b) => a + b.price, 0);
+  S.billDisputed = 0;
+  BILL_ITEMS.forEach((it, i) => {
+    const row = document.createElement('div');
+    row.className = 'bill-row';
+    row.dataset.idx = i;
+    row.innerHTML = `<span class="item">${it.label} ${it.note ? `<span style="color:#888; font-size:11px;">${it.note}</span>` : ''}</span><span class="price">$${it.price}</span><span class="tap-hint">TAP TO DISPUTE</span>`;
+    row.addEventListener('click', () => disputeBillItem(i, row));
+    c.appendChild(row);
+  });
+  updateBillTotal();
+}
+
+function disputeBillItem(i, row) {
+  if (row.classList.contains('struck')) return;
+  const item = BILL_ITEMS[i];
+  row.classList.add('struck');
+  if (item.bogus) {
+    S.billDisputed += item.price;
+    sfx('cash');
+  } else {
+    // disputed a real item — small penalty
+    sfx('bad');
+  }
+  updateBillTotal();
+  updateHud();
+}
+
+function updateBillTotal() {
+  const remaining = S.billTotal - BILL_ITEMS.reduce((a, b, i) => {
+    const row = document.querySelector(`.bill-row[data-idx="${i}"]`);
+    if (row && row.classList.contains('struck')) return a + b.price;
+    return a;
+  }, 0);
+  $('#bill-total').textContent = '$' + remaining.toLocaleString();
+}
+
+$('#bill-continue').addEventListener('click', () => {
+  sfx('click');
+  transition('escape');
+});
+
+/* ===== ESCAPE PUZZLE (Gardenscapes-style wide cloud-gated map) =====
+   Three regions in a wide panoramic world that pans horizontally:
+     Region 1 — FRONT OFFICE (always visible): Sal's desk, register, sign, mug, clipboard, RAG
+     Region 2 — MAIN GARAGE (Cloud A, cleared by picking up the rag):
+                jack-stand car, workbench, toolbox, drawer, tires, oil drum, creeper
+     Region 3 — BACK STORAGE + YARD (Cloud B, cleared by getting the keys):
+                parts shelves, doghouse, junkyard through open roll-up, chain-link fence,
+                old rusted cars, rusty gate (the true exit)
+   Collect 3 gear items (wrench + spark plug + air filter), >= $20 cash,
+   the keys, and feed Surcharge a bone. Then click the gate. */
+const ESCAPE_GOAL_CASH = 20;
+
+/* ---------- Painted wide scene background SVG ---------- */
+function escBackgroundSVG() {
+  // Painted garage interior (left + center) opening to junkyard (right) via rolled-up back door.
+  // viewBox is 1600×540 — proportional to the 1.875x widened world inside a 960×540 viewport.
+  return `
+  <svg class="esc-bg" viewBox="0 0 1600 540" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="bgSky" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#a8c8e8"/>
+        <stop offset="55%" stop-color="#c6d7df"/>
+        <stop offset="100%" stop-color="#d4c99c"/>
+      </linearGradient>
+      <linearGradient id="bgWall" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#a8a098"/>
+        <stop offset="55%" stop-color="#8a8278"/>
+        <stop offset="100%" stop-color="#6b6258"/>
+      </linearGradient>
+      <linearGradient id="bgFloor" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#4a3828"/>
+        <stop offset="60%" stop-color="#3a2a1c"/>
+        <stop offset="100%" stop-color="#2a1c12"/>
+      </linearGradient>
+      <linearGradient id="bgCeiling" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#5a4a38"/>
+        <stop offset="100%" stop-color="#3a2a1c"/>
+      </linearGradient>
+      <linearGradient id="bgDesk" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#6b4820"/>
+        <stop offset="100%" stop-color="#3a2810"/>
+      </linearGradient>
+      <linearGradient id="bgYardGrass" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#6b7c35"/>
+        <stop offset="100%" stop-color="#3a4520"/>
+      </linearGradient>
+      <pattern id="bgCinder" x="0" y="0" width="110" height="52" patternUnits="userSpaceOnUse">
+        <rect width="110" height="52" fill="#8a8278"/>
+        <line x1="0" y1="26" x2="110" y2="26" stroke="#55503f" stroke-width="2" opacity=".55"/>
+        <line x1="55" y1="0" x2="55" y2="26" stroke="#55503f" stroke-width="2" opacity=".55"/>
+        <line x1="0" y1="52" x2="110" y2="52" stroke="#55503f" stroke-width="2" opacity=".55"/>
+      </pattern>
+      <pattern id="bgCorrugated" x="0" y="0" width="24" height="20" patternUnits="userSpaceOnUse">
+        <rect width="24" height="20" fill="#3a2a1c"/>
+        <path d="M 0 10 Q 6 4 12 10 Q 18 16 24 10" stroke="#6b5438" stroke-width="1.5" fill="none"/>
+      </pattern>
+      <pattern id="bgFloorTile" x="0" y="0" width="80" height="40" patternUnits="userSpaceOnUse">
+        <rect width="80" height="40" fill="#3a2a1c"/>
+        <path d="M 0 0 L 80 0 M 0 40 L 80 40" stroke="#2a1c12" stroke-width="1" opacity=".4"/>
+      </pattern>
+      <pattern id="bgFence" x="0" y="0" width="18" height="18" patternUnits="userSpaceOnUse">
+        <path d="M 0 0 L 18 18 M 18 0 L 0 18" stroke="#8a8278" stroke-width="1.4" opacity=".85"/>
+      </pattern>
+      <radialGradient id="bgLight" cx="50%" cy="0%" r="70%">
+        <stop offset="0%" stop-color="#fff6c8" stop-opacity=".8"/>
+        <stop offset="60%" stop-color="#fff6c8" stop-opacity=".15"/>
+        <stop offset="100%" stop-color="#fff6c8" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+
+    <!-- CEILING (corrugated metal band) -->
+    <rect x="0" y="0" width="1600" height="72" fill="url(#bgCorrugated)"/>
+    <rect x="0" y="70" width="1600" height="4" fill="#1a0e08"/>
+
+    <!-- HANGING FLUORESCENT LIGHTS -->
+    <g>
+      <rect x="140" y="70" width="120" height="10" fill="#dcd5b0"/>
+      <rect x="140" y="74" width="120" height="2" fill="#8a8058"/>
+      <ellipse cx="200" cy="90" rx="180" ry="60" fill="url(#bgLight)"/>
+
+      <rect x="560" y="70" width="120" height="10" fill="#dcd5b0"/>
+      <rect x="560" y="74" width="120" height="2" fill="#8a8058"/>
+      <ellipse cx="620" cy="90" rx="180" ry="60" fill="url(#bgLight)"/>
+
+      <rect x="940" y="70" width="120" height="10" fill="#dcd5b0"/>
+      <rect x="940" y="74" width="120" height="2" fill="#8a8058"/>
+      <ellipse cx="1000" cy="90" rx="180" ry="60" fill="url(#bgLight)"/>
+    </g>
+
+    <!-- BACK WALL (cinder block) - FRONT OFFICE + GARAGE section -->
+    <rect x="0" y="74" width="1160" height="310" fill="url(#bgCinder)"/>
+
+    <!-- GRIMY HIGHLIGHT ON WALL -->
+    <rect x="0" y="74" width="1160" height="12" fill="#aba396" opacity=".6"/>
+    <rect x="0" y="380" width="1160" height="10" fill="#3e382a" opacity=".7"/>
+
+    <!-- LEFT WALL / OFFICE PARTITION with window - FRONT OFFICE -->
+    <rect x="0" y="74" width="60" height="310" fill="#4a3520"/>
+    <rect x="8" y="95" width="50" height="110" fill="url(#bgSky)" stroke="#1a0e08" stroke-width="3"/>
+    <line x1="33" y1="95" x2="33" y2="205" stroke="#1a0e08" stroke-width="2"/>
+    <line x1="8" y1="150" x2="58" y2="150" stroke="#1a0e08" stroke-width="2"/>
+
+    <!-- OFFICE BULLETIN STRIPE (above desk) -->
+    <rect x="80" y="120" width="320" height="4" fill="#3a2810"/>
+
+    <!-- GREASY WALL STAIN -->
+    <ellipse cx="260" cy="300" rx="90" ry="28" fill="#2a1c10" opacity=".35"/>
+    <ellipse cx="500" cy="280" rx="70" ry="20" fill="#2a1c10" opacity=".3"/>
+
+    <!-- WALL TRANSITION to ROLL-UP DOOR FRAME (around x=1160) -->
+    <rect x="1160" y="74" width="14" height="310" fill="#1a0e08"/>
+
+    <!-- BACK ROLL-UP DOOR OPENING (shows outdoor junkyard) -->
+    <!-- Sky + dirt gradient behind -->
+    <rect x="1174" y="90" width="412" height="220" fill="url(#bgSky)"/>
+    <!-- Distant treeline silhouette -->
+    <path d="M 1174 240 L 1200 215 L 1225 225 L 1250 205 L 1280 220 L 1310 200 L 1345 218 L 1380 200 L 1420 215 L 1460 202 L 1500 220 L 1540 208 L 1586 225 L 1586 260 L 1174 260 Z" fill="#5a6b42" opacity=".8"/>
+    <!-- Yard dirt -->
+    <rect x="1174" y="258" width="412" height="132" fill="#6b5230"/>
+    <rect x="1174" y="258" width="412" height="6" fill="#8a6a3c" opacity=".8"/>
+    <!-- Grass tufts -->
+    <g opacity=".85">
+      <path d="M 1200 300 L 1204 286 L 1208 300 M 1214 304 L 1218 290 L 1222 304 M 1188 320 L 1192 306 L 1196 320" stroke="#4a5820" stroke-width="2" fill="#4a5820"/>
+      <path d="M 1390 315 L 1394 298 L 1398 315 M 1404 318 L 1408 302 L 1412 318" stroke="#4a5820" stroke-width="2" fill="#4a5820"/>
+      <path d="M 1520 330 L 1524 314 L 1528 330 M 1534 334 L 1538 318 L 1542 334" stroke="#4a5820" stroke-width="2" fill="#4a5820"/>
+    </g>
+    <!-- CHAIN-LINK FENCE (mid-yard) -->
+    <rect x="1174" y="170" width="412" height="140" fill="url(#bgFence)" opacity=".45"/>
+    <rect x="1174" y="168" width="412" height="3" fill="#555"/>
+    <rect x="1174" y="308" width="412" height="3" fill="#555"/>
+    <g stroke="#555" stroke-width="4">
+      <line x1="1220" y1="168" x2="1220" y2="310"/>
+      <line x1="1300" y1="168" x2="1300" y2="310"/>
+      <line x1="1380" y1="168" x2="1380" y2="310"/>
+      <line x1="1460" y1="168" x2="1460" y2="310"/>
+      <line x1="1540" y1="168" x2="1540" y2="310"/>
+    </g>
+    <!-- Old rusted cars behind fence (silhouettes) -->
+    <g>
+      <!-- Car 1 (left) -->
+      <rect x="1198" y="240" width="80" height="18" rx="4" fill="#6b3a20"/>
+      <path d="M 1210 240 Q 1215 226 1228 224 L 1256 224 Q 1268 226 1272 240 Z" fill="#552a10"/>
+      <circle cx="1216" cy="258" r="7" fill="#1a0e08"/>
+      <circle cx="1262" cy="258" r="7" fill="#1a0e08"/>
+      <!-- rust patches -->
+      <ellipse cx="1230" cy="244" rx="12" ry="4" fill="#3a1c10" opacity=".7"/>
+      <!-- crumpled fender -->
+      <path d="M 1198 248 L 1190 252 L 1198 256 Z" fill="#3a1c10"/>
+      <!-- Car 2 (middle) -->
+      <rect x="1318" y="245" width="90" height="20" rx="4" fill="#52423a"/>
+      <path d="M 1326 245 Q 1332 228 1348 226 L 1380 226 Q 1396 228 1402 245 Z" fill="#3a2a20"/>
+      <ellipse cx="1348" cy="238" rx="18" ry="5" fill="#1a0e08" opacity=".6"/>
+      <circle cx="1338" cy="266" r="8" fill="#1a0e08"/>
+      <!-- no hood, engine bay visible -->
+      <rect x="1340" y="230" width="40" height="12" fill="#1a0e08"/>
+      <rect x="1348" y="234" width="6" height="6" fill="#2a1c10"/>
+      <rect x="1362" y="232" width="8" height="8" fill="#2a1c10"/>
+      <!-- Car 3 (right, on cinder blocks) -->
+      <rect x="1480" y="246" width="85" height="18" rx="4" fill="#2a3a3a"/>
+      <path d="M 1488 246 Q 1494 230 1508 228 L 1540 228 Q 1554 230 1558 246 Z" fill="#1a2828"/>
+      <!-- cinder block supports (no wheels) -->
+      <rect x="1490" y="266" width="14" height="10" fill="#888"/>
+      <rect x="1540" y="266" width="14" height="10" fill="#888"/>
+      <rect x="1492" y="269" width="10" height="3" fill="#555"/>
+      <rect x="1542" y="269" width="10" height="3" fill="#555"/>
+      <!-- rust -->
+      <ellipse cx="1514" cy="248" rx="18" ry="3" fill="#4a2818" opacity=".7"/>
+    </g>
+    <!-- Yard light pole, far right -->
+    <rect x="1578" y="95" width="4" height="180" fill="#2a1c10"/>
+    <ellipse cx="1580" cy="95" rx="12" ry="6" fill="#1a0e08"/>
+    <rect x="1572" y="88" width="16" height="10" rx="2" fill="#555"/>
+
+    <!-- ROLL-UP DOOR (partly raised) — slats at top showing it's open -->
+    <g>
+      <rect x="1174" y="74" width="412" height="18" fill="#4a3a2a"/>
+      <line x1="1174" y1="78" x2="1586" y2="78" stroke="#2a1c10"/>
+      <line x1="1174" y1="82" x2="1586" y2="82" stroke="#2a1c10"/>
+      <line x1="1174" y1="86" x2="1586" y2="86" stroke="#2a1c10"/>
+      <line x1="1174" y1="90" x2="1586" y2="90" stroke="#2a1c10"/>
+    </g>
+
+    <!-- SHOP WALL beyond roll-up door frame (edge sliver) -->
+    <rect x="1586" y="74" width="14" height="310" fill="#1a0e08"/>
+
+    <!-- FLOOR (concrete with oil stain) -->
+    <rect x="0" y="384" width="1600" height="156" fill="url(#bgFloor)"/>
+    <!-- expansion joints -->
+    <line x1="0" y1="450" x2="1160" y2="450" stroke="#1a0e08" stroke-width="1" opacity=".4"/>
+    <line x1="0" y1="510" x2="1160" y2="510" stroke="#1a0e08" stroke-width="1" opacity=".3"/>
+    <!-- Oil stains -->
+    <ellipse cx="420" cy="470" rx="70" ry="12" fill="#0a0604" opacity=".6"/>
+    <ellipse cx="410" cy="472" rx="40" ry="6" fill="#0a0604" opacity=".9"/>
+    <ellipse cx="880" cy="500" rx="55" ry="9" fill="#0a0604" opacity=".7"/>
+    <!-- Floor / yard transition under door -->
+    <rect x="1174" y="384" width="412" height="6" fill="#3a2a1c"/>
+    <rect x="1174" y="390" width="412" height="150" fill="url(#bgYardGrass)"/>
+    <!-- Dirt path from doorway -->
+    <path d="M 1174 395 L 1586 395 L 1586 540 L 1174 540 Z" fill="#6b5230" opacity=".65"/>
+    <path d="M 1174 395 Q 1380 420 1586 400 L 1586 540 L 1174 540 Z" fill="#52432a" opacity=".4"/>
+
+    <!-- FLOOR SHADOWS under the main zones (added for grounding) -->
+    <ellipse cx="160" cy="422" rx="130" ry="8" fill="#000" opacity=".35"/>
+    <ellipse cx="480" cy="460" rx="140" ry="10" fill="#000" opacity=".35"/>
+    <ellipse cx="700" cy="460" rx="90" ry="8" fill="#000" opacity=".3"/>
+    <ellipse cx="920" cy="460" rx="100" ry="9" fill="#000" opacity=".3"/>
+    <ellipse cx="1310" cy="460" rx="80" ry="7" fill="#000" opacity=".3"/>
+
+    <!-- === STATIC BACKGROUND PROPS === -->
+
+    <!-- FRONT OFFICE: Swimsuit calendar on wall -->
+    <g transform="translate(82, 148)">
+      <rect x="0" y="0" width="50" height="60" fill="#fff" stroke="#000" stroke-width="2"/>
+      <rect x="0" y="0" width="50" height="14" fill="#ef4444"/>
+      <text x="25" y="10" text-anchor="middle" font-family="Impact" font-size="7" fill="#fff">SAL'S '79</text>
+      <rect x="4" y="18" width="42" height="28" fill="#f8d0a0"/>
+      <circle cx="25" cy="28" r="6" fill="#ef4444"/>
+      <rect x="4" y="48" width="42" height="10" fill="#000"/>
+      <text x="25" y="56" text-anchor="middle" font-family="Impact" font-size="6" fill="#fff">DECEMBER</text>
+    </g>
+
+    <!-- FRONT OFFICE: SAL'S CHAIR (beat up, empty) -->
+    <g transform="translate(60, 295)">
+      <rect x="14" y="30" width="48" height="48" fill="#2a1c10" stroke="#000" stroke-width="2" rx="4"/>
+      <rect x="10" y="0" width="56" height="38" fill="#4a2820" stroke="#000" stroke-width="2" rx="6"/>
+      <rect x="14" y="4" width="48" height="30" fill="#6b3828" stroke="#000" stroke-width="1" rx="4"/>
+      <line x1="14" y1="18" x2="62" y2="18" stroke="#2a1c10"/>
+      <rect x="22" y="78" width="8" height="14" fill="#1a0e08"/>
+      <rect x="46" y="78" width="8" height="14" fill="#1a0e08"/>
+      <circle cx="26" cy="96" r="6" fill="#000"/>
+      <circle cx="50" cy="96" r="6" fill="#000"/>
+    </g>
+
+    <!-- FRONT OFFICE: SAL'S DESK -->
+    <g transform="translate(140, 340)">
+      <rect x="0" y="0" width="270" height="22" fill="url(#bgDesk)" stroke="#000" stroke-width="2.5" rx="3"/>
+      <rect x="4" y="22" width="262" height="60" fill="#52361a" stroke="#000" stroke-width="2.5"/>
+      <!-- drawer fronts -->
+      <rect x="12" y="30" width="70" height="22" fill="#6b4820" stroke="#000" stroke-width="1.5" rx="2"/>
+      <rect x="12" y="56" width="70" height="22" fill="#6b4820" stroke="#000" stroke-width="1.5" rx="2"/>
+      <circle cx="72" cy="41" r="2" fill="#fbbf24"/>
+      <circle cx="72" cy="67" r="2" fill="#fbbf24"/>
+      <!-- papers on desk -->
+      <rect x="120" y="-4" width="28" height="16" fill="#fff" transform="rotate(-6 134 4)" stroke="#000" stroke-width="1"/>
+      <rect x="150" y="-2" width="26" height="14" fill="#fff8e0" transform="rotate(4 163 5)" stroke="#000" stroke-width="1"/>
+      <rect x="182" y="-3" width="30" height="14" fill="#fff" transform="rotate(-2 197 4)" stroke="#000" stroke-width="1"/>
+      <text x="134" y="6" font-family="Impact" font-size="5" fill="#000" transform="rotate(-6 134 4)">INVOICE</text>
+      <text x="163" y="7" font-family="Impact" font-size="5" fill="#b91c1c" transform="rotate(4 163 5)">PAST DUE</text>
+    </g>
+
+    <!-- GARAGE: HYDRAULIC LIFT with YOUR CAR -->
+    <g transform="translate(420, 280)">
+      <!-- lift base arms -->
+      <rect x="-12" y="130" width="200" height="18" fill="#3a3a40" stroke="#000" stroke-width="2.5" rx="3"/>
+      <!-- vertical posts -->
+      <rect x="-18" y="-30" width="18" height="178" fill="#52525a" stroke="#000" stroke-width="2.5"/>
+      <rect x="180" y="-30" width="18" height="178" fill="#52525a" stroke="#000" stroke-width="2.5"/>
+      <!-- cross brace -->
+      <rect x="-18" y="-40" width="216" height="14" fill="#3a3a40" stroke="#000" stroke-width="2"/>
+      <!-- rails -->
+      <rect x="-4" y="60" width="188" height="6" fill="#888"/>
+      <rect x="-4" y="66" width="188" height="2" fill="#444"/>
+      <!-- YOUR HOT ROD -->
+      <g transform="translate(6, 10)">
+        <!-- body -->
+        <path d="M 0 42 L 18 42 Q 22 32 34 30 L 90 30 Q 110 32 118 42 L 166 42 L 166 54 L 0 54 Z" fill="#ef4444" stroke="#000" stroke-width="2.5"/>
+        <!-- roof -->
+        <path d="M 36 30 L 48 18 L 88 18 L 104 30 Z" fill="#c41818" stroke="#000" stroke-width="2.5"/>
+        <!-- windows -->
+        <path d="M 42 28 L 52 22 L 86 22 L 98 28 Z" fill="#bad8e4" stroke="#000" stroke-width="1.5"/>
+        <line x1="70" y1="22" x2="70" y2="28" stroke="#000" stroke-width="1.5"/>
+        <!-- headlight -->
+        <circle cx="160" cy="40" r="4" fill="#fbbf24" stroke="#000" stroke-width="1.5"/>
+        <!-- door handles + flames -->
+        <path d="M 48 40 L 58 36 L 52 46 L 62 44 L 54 52" fill="#fbbf24" stroke="#c41818" stroke-width="1"/>
+        <!-- HOOD OPEN -->
+        <path d="M 110 30 L 118 18 L 160 18 L 164 30 Z" fill="#c41818" stroke="#000" stroke-width="2"/>
+        <path d="M 114 22 L 160 22" stroke="#000" stroke-width="1"/>
+        <!-- exposed engine block under open hood -->
+        <rect x="118" y="26" width="38" height="6" fill="#1a0e08"/>
+        <circle cx="124" cy="28" r="1.5" fill="#fbbf24"/>
+        <circle cx="148" cy="28" r="1.5" fill="#fbbf24"/>
+      </g>
+      <!-- lift labels -->
+      <rect x="185" y="-25" width="12" height="52" fill="#fbbf24" stroke="#000" stroke-width="1"/>
+      <text x="191" y="5" font-family="Impact" font-size="9" fill="#000" transform="rotate(90 191 5)">LIFT</text>
+    </g>
+
+    <!-- GARAGE: PEGBOARD (tools hung) — behind workbench -->
+    <g transform="translate(480, 110)">
+      <rect x="0" y="0" width="170" height="68" fill="#b8a080" stroke="#000" stroke-width="2.5"/>
+      <g fill="#2a1c10">
+        <circle cx="12" cy="10" r="1.4"/><circle cx="26" cy="10" r="1.4"/><circle cx="40" cy="10" r="1.4"/>
+        <circle cx="54" cy="10" r="1.4"/><circle cx="68" cy="10" r="1.4"/><circle cx="82" cy="10" r="1.4"/>
+        <circle cx="96" cy="10" r="1.4"/><circle cx="110" cy="10" r="1.4"/><circle cx="124" cy="10" r="1.4"/>
+        <circle cx="138" cy="10" r="1.4"/><circle cx="152" cy="10" r="1.4"/><circle cx="166" cy="10" r="1.4"/>
+        <circle cx="12" cy="22" r="1.4"/><circle cx="26" cy="22" r="1.4"/><circle cx="40" cy="22" r="1.4"/>
+        <circle cx="68" cy="22" r="1.4"/><circle cx="82" cy="22" r="1.4"/><circle cx="124" cy="22" r="1.4"/>
+      </g>
+      <!-- hanging tools -->
+      <!-- big hammer -->
+      <rect x="12" y="14" width="4" height="34" fill="#6b3a18" stroke="#000" stroke-width="1"/>
+      <rect x="6" y="10" width="16" height="8" fill="#555" stroke="#000" stroke-width="1" rx="1"/>
+      <!-- pliers -->
+      <path d="M 42 14 L 40 30 L 36 36 L 42 36 L 44 30 L 46 14 Z" fill="#555" stroke="#000" stroke-width="1"/>
+      <!-- big wrench -->
+      <path d="M 68 14 L 72 14 L 72 24 L 68 28 L 72 32 L 76 30 L 86 40 L 84 44 L 74 34 L 68 34 Z" fill="#9aa0a8" stroke="#000" stroke-width="1"/>
+      <!-- screwdriver -->
+      <rect x="98" y="14" width="3" height="26" fill="#888" stroke="#000" stroke-width="1"/>
+      <rect x="94" y="12" width="11" height="8" fill="#c41818" stroke="#000" stroke-width="1" rx="1"/>
+      <!-- pipe wrench -->
+      <rect x="120" y="16" width="5" height="34" fill="#c41818" stroke="#000" stroke-width="1"/>
+      <rect x="115" y="14" width="15" height="7" fill="#888" stroke="#000" stroke-width="1"/>
+      <!-- socket set ring -->
+      <circle cx="148" cy="26" r="9" fill="none" stroke="#888" stroke-width="2"/>
+      <circle cx="145" cy="26" r="2" fill="#444"/>
+      <circle cx="151" cy="26" r="2" fill="#444"/>
+      <circle cx="148" cy="29" r="2" fill="#444"/>
+    </g>
+
+    <!-- GARAGE: RAISED SAFETY TRIANGLE + FIRE EXTINGUISHER -->
+    <g transform="translate(670, 260)">
+      <rect x="0" y="0" width="16" height="44" fill="#c41818" stroke="#000" stroke-width="2" rx="3"/>
+      <rect x="3" y="-6" width="10" height="8" fill="#555" stroke="#000" stroke-width="1.5"/>
+      <rect x="2" y="14" width="12" height="10" fill="#fff" stroke="#000" stroke-width="1"/>
+      <text x="8" y="22" text-anchor="middle" font-family="Impact" font-size="6" fill="#000">FIRE</text>
+    </g>
+
+    <!-- GARAGE: SHOP CREEPER on floor -->
+    <g transform="translate(320, 440)">
+      <rect x="0" y="4" width="60" height="18" fill="#c41818" stroke="#000" stroke-width="2" rx="3"/>
+      <!-- head pillow -->
+      <rect x="48" y="0" width="14" height="10" fill="#3a1c10" stroke="#000" stroke-width="1.5" rx="2"/>
+      <!-- caster wheels -->
+      <circle cx="8" cy="24" r="4" fill="#000"/>
+      <circle cx="28" cy="24" r="4" fill="#000"/>
+      <circle cx="48" cy="24" r="4" fill="#000"/>
+    </g>
+
+    <!-- GARAGE: JACK STAND beside car -->
+    <g transform="translate(380, 410)">
+      <path d="M 0 0 L 16 -20 L 32 0 Z" fill="none" stroke="#000" stroke-width="2.5"/>
+      <rect x="6" y="-10" width="20" height="5" fill="#fbbf24" stroke="#000" stroke-width="1.5"/>
+      <rect x="-2" y="0" width="36" height="6" fill="#4a4a50" stroke="#000" stroke-width="1.5"/>
+    </g>
+    <g transform="translate(580, 410)">
+      <path d="M 0 0 L 16 -20 L 32 0 Z" fill="none" stroke="#000" stroke-width="2.5"/>
+      <rect x="6" y="-10" width="20" height="5" fill="#fbbf24" stroke="#000" stroke-width="1.5"/>
+      <rect x="-2" y="0" width="36" height="6" fill="#4a4a50" stroke="#000" stroke-width="1.5"/>
+    </g>
+
+    <!-- BACK STORAGE: TALL PARTS SHELF (behind parts bin) -->
+    <g transform="translate(1068, 120)">
+      <rect x="0" y="0" width="92" height="250" fill="#4a3a20" stroke="#000" stroke-width="2.5"/>
+      <!-- shelves -->
+      <rect x="2" y="6" width="88" height="3" fill="#2a1c10"/>
+      <rect x="2" y="66" width="88" height="3" fill="#2a1c10"/>
+      <rect x="2" y="126" width="88" height="3" fill="#2a1c10"/>
+      <rect x="2" y="186" width="88" height="3" fill="#2a1c10"/>
+      <rect x="2" y="246" width="88" height="3" fill="#2a1c10"/>
+      <!-- bins on shelves (decorative) -->
+      <rect x="8" y="12" width="24" height="50" fill="#c41818" stroke="#000" stroke-width="1.5" rx="2"/>
+      <rect x="36" y="12" width="24" height="50" fill="#fbbf24" stroke="#000" stroke-width="1.5" rx="2"/>
+      <rect x="64" y="12" width="24" height="50" fill="#3b82f6" stroke="#000" stroke-width="1.5" rx="2"/>
+      <rect x="8" y="72" width="40" height="52" fill="#2a3a48" stroke="#000" stroke-width="1.5" rx="2"/>
+      <rect x="52" y="72" width="36" height="52" fill="#6b6258" stroke="#000" stroke-width="1.5" rx="2"/>
+      <!-- cans and boxes -->
+      <rect x="8" y="132" width="20" height="50" fill="#7a8066" stroke="#000" stroke-width="1.5"/>
+      <text x="18" y="160" text-anchor="middle" font-family="Impact" font-size="7" fill="#000">OIL</text>
+      <rect x="32" y="142" width="24" height="40" fill="#8a4820" stroke="#000" stroke-width="1.5"/>
+      <circle cx="44" cy="162" r="10" fill="#3a1c10" stroke="#000" stroke-width="1"/>
+      <rect x="60" y="132" width="28" height="50" fill="#d4c99c" stroke="#000" stroke-width="1.5"/>
+      <text x="74" y="158" text-anchor="middle" font-family="Impact" font-size="6" fill="#000">PARTS</text>
+      <!-- bottom shelf: tire + belts -->
+      <circle cx="20" cy="216" r="16" fill="#1a0e08" stroke="#000" stroke-width="1.5"/>
+      <circle cx="20" cy="216" r="7" fill="#3a3a40"/>
+      <path d="M 40 196 L 86 196 L 86 234 L 40 234 Z" fill="#2a1c10" stroke="#000" stroke-width="1.5"/>
+      <path d="M 44 202 Q 56 208 70 202 Q 82 208 84 210" stroke="#555" stroke-width="2" fill="none"/>
+      <path d="M 44 214 Q 56 220 70 214 Q 82 220 84 222" stroke="#555" stroke-width="2" fill="none"/>
+    </g>
+
+    <!-- BACK YARD: DOGHOUSE (inside the doorway area) -->
+    <g transform="translate(1190, 286)">
+      <path d="M 0 30 L 32 0 L 64 30 Z" fill="#8a4820" stroke="#000" stroke-width="2.5"/>
+      <rect x="6" y="30" width="52" height="48" fill="#6b3818" stroke="#000" stroke-width="2.5"/>
+      <!-- doghouse opening -->
+      <path d="M 22 78 L 22 56 Q 22 44 32 44 Q 42 44 42 56 L 42 78 Z" fill="#1a0e08" stroke="#000" stroke-width="2"/>
+      <!-- name plaque -->
+      <rect x="14" y="36" width="36" height="10" fill="#fff" stroke="#000" stroke-width="1.5"/>
+      <text x="32" y="44" text-anchor="middle" font-family="Impact" font-size="7" fill="#000">SURCHARGE</text>
+    </g>
+
+    <!-- BACK YARD: rusty oil barrel decor -->
+    <g transform="translate(1330, 310)">
+      <rect x="0" y="0" width="30" height="50" fill="#6b3a20" stroke="#000" stroke-width="2.5" rx="2"/>
+      <ellipse cx="15" cy="0" rx="15" ry="4" fill="#8a4828" stroke="#000" stroke-width="1.5"/>
+      <ellipse cx="15" cy="0" rx="11" ry="3" fill="#3a1c10"/>
+      <rect x="0" y="20" width="30" height="3" fill="#3a1c10"/>
+      <ellipse cx="6" cy="30" rx="4" ry="2" fill="#4a2818" opacity=".8"/>
+    </g>
+  </svg>
+  `;
+}
+
+/* ---------- Cloud SVG (reused for both clouds) ---------- */
+function escCloudSVG() {
+  return `
+    <svg viewBox="0 0 400 240" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="fogCore" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#ffffff" stop-opacity=".98"/>
+          <stop offset="60%" stop-color="#e8eef2" stop-opacity=".95"/>
+          <stop offset="100%" stop-color="#b8c0c8" stop-opacity=".65"/>
+        </radialGradient>
+      </defs>
+      <!-- Bottom haze -->
+      <ellipse cx="80" cy="200" rx="120" ry="50" fill="url(#fogCore)"/>
+      <ellipse cx="220" cy="210" rx="140" ry="55" fill="url(#fogCore)"/>
+      <ellipse cx="330" cy="195" rx="110" ry="45" fill="url(#fogCore)"/>
+      <!-- Middle body -->
+      <ellipse cx="70" cy="130" rx="95" ry="60" fill="url(#fogCore)"/>
+      <ellipse cx="160" cy="110" rx="130" ry="75" fill="url(#fogCore)"/>
+      <ellipse cx="260" cy="130" rx="110" ry="65" fill="url(#fogCore)"/>
+      <ellipse cx="340" cy="125" rx="90" ry="55" fill="url(#fogCore)"/>
+      <!-- Top puffs -->
+      <ellipse cx="110" cy="70" rx="60" ry="40" fill="url(#fogCore)"/>
+      <ellipse cx="200" cy="50" rx="80" ry="45" fill="url(#fogCore)"/>
+      <ellipse cx="280" cy="70" rx="65" ry="38" fill="url(#fogCore)"/>
+      <!-- wispy bits -->
+      <ellipse cx="30" cy="160" rx="40" ry="22" fill="url(#fogCore)" opacity=".7"/>
+      <ellipse cx="380" cy="150" rx="40" ry="22" fill="url(#fogCore)" opacity=".7"/>
+      <!-- subtle outline highlights -->
+      <ellipse cx="170" cy="90" rx="90" ry="45" fill="#ffffff" opacity=".18"/>
+    </svg>
+  `;
+}
+
+function setupEscape() {
+  // ----- State reset -----
+  S.hasBone = false; S.hasKeys = false; S.dogDistracted = false;
+  S.hasRag = false; S.hasWrench = false; S.hasPlug = false;
+  S.hasFilter = false; S.escapeCash = 0;
+  S.cloudsCleared = { A: false, B: false };
+
+  // ----- Goal tracker -----
+  $('#escape-goals').innerHTML = `
+    <span class="goal-chip" id="goal-parts">🔩 GEAR <span class="chip-count" id="goal-parts-count">0</span> / 3</span>
+    <span class="goal-chip" id="goal-cash">💵 CASH <span class="chip-count" id="goal-cash-count">$0</span> / $${ESCAPE_GOAL_CASH}</span>
+    <span class="goal-chip" id="goal-keys">🔑 KEYS <span class="chip-count" id="goal-keys-count">NO</span></span>
+    <span class="goal-chip" id="goal-dog">🐕 DOG <span class="chip-count" id="goal-dog-count">ANGRY</span></span>
+  `;
+
+  // ----- Inventory reset -----
+  ['rag','wrench','keys','bone','plug','filter'].forEach(id => {
+    const el = $('#inv-' + id);
+    el.classList.remove('has');
+    el.innerHTML = '';
+  });
+
+  // ----- Room HTML -----
+  // Coordinates are % of the .esc-world (which is 187.5% the viewport wide).
+  // Regions in world-%:  Office ≈ 0–35%, Garage ≈ 35–65%, Back/Yard ≈ 65–100%.
+  const room = $('#escape-room');
+  room.innerHTML = `
+    <button class="esc-pan left" id="esc-pan-left" title="Pan left" aria-label="Pan left">◀</button>
+    <button class="esc-pan right" id="esc-pan-right" title="Pan right" aria-label="Pan right">▶</button>
+
+    <div class="esc-world" id="esc-world">
+      ${escBackgroundSVG()}
+
+      <div class="region-label show" id="lbl-1" style="left:10%;">FRONT OFFICE</div>
+      <div class="region-label" id="lbl-2" style="left:42%;">MAIN GARAGE</div>
+      <div class="region-label" id="lbl-3" style="left:75%;">BACK STORAGE &amp; YARD</div>
+
+      <!-- ============== REGION 1: FRONT OFFICE ============== -->
+
+      <!-- Bankruptcy sign on the wall -->
+      <div class="zone" id="z-sign" style="left:4%; top:16%; width:10%;">
+        ${SVG.bankruptcySign}
+        <div class="zone-tip" id="tip-sign">Bankruptcy sign</div>
+      </div>
+
+      <!-- Cash register on desk (locked) -->
+      <div class="zone locked-z" id="z-cashreg" style="left:11.5%; top:52%; width:6%;">
+        ${SVG.cashReg}
+        <div class="zone-tip" id="tip-cashreg">Cash register (locked)</div>
+      </div>
+
+      <!-- Coffee mug on desk -->
+      <div class="zone" id="z-mug" style="left:19.5%; top:56%; width:3%;">
+        ${SVG.mug}
+        <div class="zone-tip" id="tip-mug">"#1 SCAM" mug</div>
+      </div>
+
+      <!-- Clipboard (hanging) -->
+      <div class="zone" id="z-clipboard" style="left:7%; top:25%; width:4%;">
+        <svg viewBox="0 0 50 60" xmlns="http://www.w3.org/2000/svg">
+          <rect x="6" y="10" width="38" height="46" fill="#8a6030" stroke="#000" stroke-width="2.5" rx="2"/>
+          <rect x="10" y="14" width="30" height="38" fill="#fff" stroke="#000" stroke-width="1.5"/>
+          <rect x="18" y="4" width="14" height="10" fill="#c0c0c0" stroke="#000" stroke-width="1.5" rx="2"/>
+          <line x1="12" y1="20" x2="38" y2="20" stroke="#aaa"/>
+          <line x1="12" y1="26" x2="34" y2="26" stroke="#aaa"/>
+          <line x1="12" y1="32" x2="38" y2="32" stroke="#aaa"/>
+          <line x1="12" y1="38" x2="30" y2="38" stroke="#aaa"/>
+          <text x="14" y="50" font-family="Impact" font-size="6" fill="#b91c1c">URGENT!</text>
+        </svg>
+        <div class="zone-tip" id="tip-clipboard">Sal's to-do list</div>
+      </div>
+
+      <!-- Greasy RAG on the floor — STARTER -->
+      <div class="zone shine" id="z-rag" style="left:26%; top:83%; width:4%;">
+        ${SVG.rag}
+        <div class="zone-tip" id="tip-rag">Greasy rag (pick me up!)</div>
+      </div>
+
+      <!-- ============== REGION 2: MAIN GARAGE (hidden by Cloud A) ============== -->
+
+      <!-- Workbench (the pegboard in bg; this sprite goes under it) -->
+      <div class="zone" id="z-bench" style="left:34%; top:42%; width:14%;">
+        ${SVG.bench}
+        <div class="zone-tip" id="tip-bench">Workbench (tools coated in oil)</div>
+      </div>
+
+      <!-- Tire pile -->
+      <div class="zone" id="z-tires" style="left:35%; top:70%; width:7%;">
+        ${SVG.tires}
+        <div class="zone-tip" id="tip-tires">Old tire pile</div>
+      </div>
+
+      <!-- Oil drum -->
+      <div class="zone" id="z-oildrum" style="left:44%; top:70%; width:4%;">
+        <svg viewBox="0 0 60 80" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="30" cy="76" rx="24" ry="4" fill="#000" opacity=".4"/>
+          <rect x="4" y="10" width="52" height="62" fill="#d4c99c" stroke="#000" stroke-width="2.5" rx="2"/>
+          <ellipse cx="30" cy="10" rx="26" ry="6" fill="#ebe4ba" stroke="#000" stroke-width="2"/>
+          <ellipse cx="30" cy="10" rx="22" ry="4" fill="#bfb48a"/>
+          <rect x="4" y="22" width="52" height="3" fill="#8a7f5a"/>
+          <rect x="4" y="54" width="52" height="3" fill="#8a7f5a"/>
+          <text x="30" y="46" text-anchor="middle" font-family="Impact" font-size="9" fill="#c41818">55 GAL</text>
+          <text x="30" y="58" text-anchor="middle" font-family="Impact" font-size="6" fill="#000">USED OIL</text>
+        </svg>
+        <div class="zone-tip" id="tip-oildrum">Used oil drum</div>
+      </div>
+
+      <!-- Rolling tool chest (locked) -->
+      <div class="zone locked-z" id="z-toolbox" style="left:52%; top:61%; width:8%;">
+        ${SVG.toolbox}
+        <div class="zone-tip" id="tip-toolbox">Locked toolbox</div>
+      </div>
+
+      <!-- Drawer cabinet (locked) -->
+      <div class="zone locked-z" id="z-drawer" style="left:60%; top:51%; width:6%;">
+        ${SVG.drawer}
+        <div class="zone-tip" id="tip-drawer">Sal's drawer (stuck)</div>
+      </div>
+
+      <!-- ============== REGION 3: BACK STORAGE + YARD (hidden by Cloud B) ============== -->
+
+      <!-- Parts bin on shelf (locked) -->
+      <div class="zone locked-z" id="z-partsbin" style="left:69%; top:42%; width:7%;">
+        ${SVG.partsBin}
+        <div class="zone-tip" id="tip-partsbin">Parts bin (locked)</div>
+      </div>
+
+      <!-- Dog bowl -->
+      <div class="zone" id="z-bowl" style="left:78.5%; top:82%; width:4%;">
+        ${SVG.bowl}
+        <div class="zone-tip" id="tip-bowl">Surcharge's bowl (empty)</div>
+      </div>
+
+      <!-- Dog (Surcharge) — blocks the yard path -->
+      <div class="zone" id="z-dog" style="left:83.5%; top:64%; width:7.5%;">
+        ${SVG.dog}
+        <div class="zone-tip" id="tip-dog">Surcharge — hungry &amp; angry</div>
+      </div>
+
+      <!-- Rusty gate (final exit) — inside yard, far right -->
+      <div class="zone locked-z" id="z-door" style="left:93%; top:46%; width:5.5%;">
+        <svg viewBox="0 0 80 120" xmlns="http://www.w3.org/2000/svg">
+          <!-- posts -->
+          <rect x="4" y="8" width="10" height="110" fill="#6b3a20" stroke="#000" stroke-width="2.5" rx="1"/>
+          <rect x="66" y="8" width="10" height="110" fill="#6b3a20" stroke="#000" stroke-width="2.5" rx="1"/>
+          <!-- gate rails -->
+          <rect x="14" y="22" width="52" height="8" fill="#8a4828" stroke="#000" stroke-width="2"/>
+          <rect x="14" y="90" width="52" height="8" fill="#8a4828" stroke="#000" stroke-width="2"/>
+          <!-- diagonal brace -->
+          <path d="M 14 90 L 66 22" stroke="#8a4828" stroke-width="6"/>
+          <path d="M 14 90 L 66 22" stroke="#000" stroke-width="1.5" fill="none"/>
+          <!-- vertical slats -->
+          <rect x="18" y="30" width="5" height="60" fill="#8a4828" stroke="#000" stroke-width="1.5"/>
+          <rect x="28" y="30" width="5" height="60" fill="#8a4828" stroke="#000" stroke-width="1.5"/>
+          <rect x="38" y="30" width="5" height="60" fill="#8a4828" stroke="#000" stroke-width="1.5"/>
+          <rect x="48" y="30" width="5" height="60" fill="#8a4828" stroke="#000" stroke-width="1.5"/>
+          <rect x="58" y="30" width="5" height="60" fill="#8a4828" stroke="#000" stroke-width="1.5"/>
+          <!-- rust patches -->
+          <ellipse cx="22" cy="50" rx="8" ry="3" fill="#3a1c10" opacity=".7"/>
+          <ellipse cx="50" cy="78" rx="9" ry="3" fill="#3a1c10" opacity=".7"/>
+          <!-- chain + padlock (will animate off when unlocked) -->
+          <g id="gate-lock-group">
+            <path d="M 36 58 Q 40 50 44 58 Q 40 66 36 58" stroke="#888" stroke-width="3" fill="none"/>
+            <rect x="34" y="62" width="12" height="12" fill="#fbbf24" stroke="#000" stroke-width="2" rx="2"/>
+            <circle cx="40" cy="68" r="1.5" fill="#000"/>
+          </g>
+          <!-- "EXIT" sign -->
+          <rect x="16" y="2" width="48" height="12" fill="#c41818" stroke="#000" stroke-width="1.5" rx="2"/>
+          <text x="40" y="11" text-anchor="middle" font-family="Impact" font-size="8" fill="#fff">EXIT</text>
+        </svg>
+        <div class="zone-tip" id="tip-door">Rusty gate (padlocked)</div>
+      </div>
+
+      <!-- ============== CLOUDS ============== -->
+      <div class="esc-cloud" id="cloud-A" style="left:32%; width:36%;">
+        ${escCloudSVG()}
+        <div class="esc-cloud-lock">🌫️ FOGGED IN<span class="hint-sub">Grab something from the office to clear it</span></div>
+      </div>
+
+      <div class="esc-cloud" id="cloud-B" style="left:65%; width:36%;">
+        ${escCloudSVG()}
+        <div class="esc-cloud-lock">🌫️ FOGGED IN<span class="hint-sub">Find the keys to clear it</span></div>
+      </div>
+    </div>
+
+    <!-- Floating GO button (sits on viewport, not in the panning world) -->
+    <button class="escape-final-btn" id="escape-go-btn">▶ GO — ESCAPE!</button>
+  `;
+
+  $('#escape-status').textContent = 'Look around Sal\'s office. Grab that greasy rag on the floor first.';
+
+  /* ---------- Camera panning ---------- */
+  let panIdx = 0; // 0 = office, 1 = garage, 2 = yard
+  function setPan(n) {
+    panIdx = Math.max(0, Math.min(2, n));
+    const w = $('#esc-world');
+    if (!w) return;
+    w.classList.remove('pan-1','pan-2');
+    if (panIdx === 1) w.classList.add('pan-1');
+    else if (panIdx === 2) w.classList.add('pan-2');
+    updatePanArrows();
+  }
+  function updatePanArrows() {
+    const leftBtn = $('#esc-pan-left');
+    const rightBtn = $('#esc-pan-right');
+    if (!leftBtn || !rightBtn) return;
+    leftBtn.classList.toggle('show', panIdx > 0);
+    const canRight =
+      (panIdx === 0 && S.cloudsCleared.A) ||
+      (panIdx === 1 && S.cloudsCleared.B);
+    rightBtn.classList.toggle('show', canRight);
+  }
+  setPan(0);
+
+  $('#esc-pan-left').addEventListener('click', () => { setPan(panIdx - 1); sfx('click'); });
+  $('#esc-pan-right').addEventListener('click', () => { setPan(panIdx + 1); sfx('click'); });
+
+  /* ---------- Helpers ---------- */
+  function popMoney(zoneId, amount) {
+    const z = $('#' + zoneId);
+    if (!z) return;
+    const pop = document.createElement('div');
+    pop.className = 'money-pop';
+    pop.textContent = '+$' + amount;
+    pop.style.left = '50%';
+    pop.style.top = '10%';
+    pop.style.transform = 'translateX(-50%)';
+    z.appendChild(pop);
+    setTimeout(() => pop.remove(), 1000);
+    S.escapeCash += amount;
+    updateGoals();
+    sfx('cash');
+  }
+  function giveItem(invId, svg, label, statusText) {
+    const slot = $('#inv-' + invId);
+    slot.classList.add('has');
+    slot.innerHTML = svg;
+    $('#escape-status').textContent = statusText;
+    sfx('pickup');
+    updateGoals();
+  }
+  function markDone(zoneId) {
+    const z = $('#' + zoneId);
+    if (z) z.classList.add('done-z');
+  }
+  function unlock(zoneId) {
+    const z = $('#' + zoneId);
+    if (z) z.classList.remove('locked-z');
+  }
+  function setTip(zoneId, text) {
+    const tip = $('#tip-' + zoneId.replace('z-',''));
+    if (tip) tip.textContent = text;
+  }
+  function partsCollected() {
+    return (S.hasWrench?1:0) + (S.hasPlug?1:0) + (S.hasFilter?1:0);
+  }
+  function updateGoals() {
+    $('#goal-parts-count').textContent = partsCollected();
+    $('#goal-cash-count').textContent = '$' + S.escapeCash;
+    $('#goal-keys-count').textContent = S.hasKeys ? 'YES' : 'NO';
+    $('#goal-dog-count').textContent = S.dogDistracted ? 'HAPPY' : 'ANGRY';
+    $('#goal-parts').classList.toggle('done', partsCollected() === 3);
+    $('#goal-cash').classList.toggle('done', S.escapeCash >= ESCAPE_GOAL_CASH);
+    $('#goal-keys').classList.toggle('done', S.hasKeys);
+    $('#goal-dog').classList.toggle('done', S.dogDistracted);
+    const ready = partsCollected() === 3 && S.escapeCash >= ESCAPE_GOAL_CASH && S.hasKeys && S.dogDistracted;
+    $('#escape-go-btn').classList.toggle('ready', ready);
+    if (ready) $('#escape-status').textContent = '✓ All set. Hit GO — or click the gate — to escape!';
+  }
+  function clearCloud(id, after) {
+    const cloud = $('#' + id);
+    if (!cloud || cloud.classList.contains('cleared')) return;
+    cloud.classList.add('cleared');
+    // Burst sparkle at cloud center
+    const world = $('#esc-world');
+    const burst = document.createElement('div');
+    burst.className = 'esc-reveal-burst';
+    burst.style.left = cloud.style.left;
+    burst.style.top = '35%';
+    burst.style.width = cloud.style.width;
+    burst.style.height = '30%';
+    burst.innerHTML = `
+      <svg viewBox="0 0 400 200" width="100%" height="100%">
+        <circle cx="80"  cy="80"  r="10" fill="#ffec40"/>
+        <circle cx="180" cy="100" r="14" fill="#fff6c8"/>
+        <circle cx="280" cy="70"  r="12" fill="#ffec40"/>
+        <circle cx="340" cy="120" r="9"  fill="#fff6c8"/>
+      </svg>`;
+    world.appendChild(burst);
+    sfx('good');
+    setTimeout(() => burst.remove(), 1200);
+    if (after) setTimeout(after, 900);
+  }
+  updateGoals();
+
+  /* ---------- ZONE HANDLERS ---------- */
+
+  // ===== Region 1 — Front office =====
+
+  // Rag — the KEY starter. Picking this up clears Cloud A.
+  $('#z-rag').addEventListener('click', () => {
+    if (S.hasRag) return;
+    S.hasRag = true;
+    giveItem('rag', SVG.rag, 'Rag', '🧴 Grabbed the greasy rag. The fog in the garage is lifting!');
+    markDone('z-rag');
+    popMoney('z-rag', 2);
+    clearCloud('cloud-A', () => {
+      S.cloudsCleared.A = true;
+      $('#lbl-2').classList.add('show');
+      setPan(1);
+      $('#escape-status').textContent = '🔧 The main garage is yours to search. Start with the workbench.';
+    });
+  });
+
+  // Coffee mug — loose change
+  $('#z-mug').addEventListener('click', () => {
+    if ($('#z-mug').classList.contains('done-z')) return;
+    popMoney('z-mug', 2);
+    $('#escape-status').textContent = '☕ Loose change under the "#1 SCAM" mug: $2.';
+    markDone('z-mug');
+  });
+
+  // Bankruptcy sign — reveals cash behind it
+  $('#z-sign').addEventListener('click', () => {
+    if ($('#z-sign').classList.contains('done-z')) return;
+    popMoney('z-sign', 4);
+    $('#escape-status').textContent = '💵 The BANKRUPTCY SALE sign crashes down. $4 was taped behind it.';
+    markDone('z-sign');
+  });
+
+  // Clipboard — hint only
+  $('#z-clipboard').addEventListener('click', () => {
+    if ($('#z-clipboard').classList.contains('done-z')) return;
+    $('#escape-status').textContent = '📋 Sal\'s to-do: "#1 LOCK DRAWER, #2 FEED DOG, #3 FIND KEYS". Helpful.';
+    sfx('ding');
+    markDone('z-clipboard');
+  });
+
+  // ===== Region 2 — Main garage =====
+
+  // Workbench — needs rag. Gives wrench + cash.
+  $('#z-bench').addEventListener('click', () => {
+    if (S.hasWrench) return;
+    if (!S.hasRag) {
+      $('#escape-status').textContent = '🤮 Tools are coated in old oil. You need something to wipe them off.';
+      sfx('bad'); return;
+    }
+    S.hasWrench = true;
+    giveItem('wrench', SVG.wrench, 'Wrench', '🔧 Got the wrench! The toolbox and drawer will open now.');
+    popMoney('z-bench', 3);
+    markDone('z-bench');
+    unlock('z-toolbox'); setTip('z-toolbox', 'Toolbox (pry it open)');
+    unlock('z-drawer');  setTip('z-drawer',  'Sal\'s drawer (pry with wrench)');
+  });
+
+  // Tire pile — cash
+  $('#z-tires').addEventListener('click', () => {
+    if ($('#z-tires').classList.contains('done-z')) return;
+    popMoney('z-tires', 3);
+    $('#escape-status').textContent = '💵 Crumpled $3 wedged in the tires. Sal is terrible at taxes.';
+    markDone('z-tires');
+  });
+
+  // Oil drum — cash
+  $('#z-oildrum').addEventListener('click', () => {
+    if ($('#z-oildrum').classList.contains('done-z')) return;
+    popMoney('z-oildrum', 2);
+    $('#escape-status').textContent = '🛢️ Two dollars floating in used oil. Worth it.';
+    markDone('z-oildrum');
+  });
+
+  // Toolbox — needs wrench. Gives spark plug + bone + cash.
+  $('#z-toolbox').addEventListener('click', () => {
+    if (!S.hasWrench) {
+      $('#escape-status').textContent = '🔒 Padlocked. Need a wrench to crack it.';
+      sfx('bad'); return;
+    }
+    if ($('#z-toolbox').classList.contains('done-z')) return;
+    if (!S.hasPlug) {
+      S.hasPlug = true;
+      giveItem('plug', SVG.sparkPlug, 'Spark plug', '⚡ Spark plug — your car needs that.');
+    }
+    if (!S.hasBone) {
+      S.hasBone = true;
+      giveItem('bone', SVG.bone, 'Bone', '🦴 A bone! Something for Surcharge.');
+    }
+    popMoney('z-toolbox', 2);
+    markDone('z-toolbox');
+  });
+
+  // Drawer — needs wrench. Gives keys + cash. Clears Cloud B.
+  $('#z-drawer').addEventListener('click', () => {
+    if (!S.hasWrench) {
+      $('#escape-status').textContent = '🔒 Stuck. You need a wrench to pry it open.';
+      sfx('bad'); return;
+    }
+    if (S.hasKeys) return;
+    S.hasKeys = true;
+    giveItem('keys', SVG.keys, 'Keys', '🔑 Your keys! The fog over the back is lifting…');
+    popMoney('z-drawer', 5);
+    markDone('z-drawer');
+    unlock('z-partsbin'); setTip('z-partsbin', 'Parts bin (keys fit)');
+    unlock('z-cashreg');  setTip('z-cashreg',  'Register (keys fit)');
+    clearCloud('cloud-B', () => {
+      S.cloudsCleared.B = true;
+      $('#lbl-3').classList.add('show');
+      setPan(2);
+      $('#escape-status').textContent = '🚪 Back storage and yard are open. Mind the dog.';
+    });
+  });
+
+  // Cash register — needs keys. Gives cash.
+  $('#z-cashreg').addEventListener('click', () => {
+    if (!S.hasKeys) {
+      $('#escape-status').textContent = '🔒 Register is locked. Need keys.';
+      sfx('bad'); return;
+    }
+    if ($('#z-cashreg').classList.contains('done-z')) return;
+    popMoney('z-cashreg', 5);
+    $('#escape-status').textContent = '💰 Ka-ching! $5 from Sal\'s till.';
+    markDone('z-cashreg');
+  });
+
+  // ===== Region 3 — Back storage + yard =====
+
+  // Parts bin — needs keys. Gives air filter + cash.
+  $('#z-partsbin').addEventListener('click', () => {
+    if (!S.hasKeys) {
+      $('#escape-status').textContent = '🔒 Bin is padlocked. Find the keys first.';
+      sfx('bad'); return;
+    }
+    if (S.hasFilter) return;
+    S.hasFilter = true;
+    giveItem('filter', SVG.airFilter, 'Air filter', '🌬️ Real air filter — your third part. +$2 on top.');
+    popMoney('z-partsbin', 2);
+    markDone('z-partsbin');
+  });
+
+  // Dog bowl — hint only
+  $('#z-bowl').addEventListener('click', () => {
+    if (S.hasBone && !S.dogDistracted) {
+      $('#escape-status').textContent = '🦴 Drop the bone for Surcharge! (Click the dog.)';
+      sfx('ding');
+    } else if (S.dogDistracted) {
+      $('#escape-status').textContent = 'Surcharge is very full.';
+    } else {
+      $('#escape-status').textContent = '🥣 Empty bowl. Find him something to eat.';
+      sfx('click');
+    }
+  });
+
+  // Dog — needs bone. Feeding him clears the gate.
+  $('#z-dog').addEventListener('click', () => {
+    if (S.dogDistracted) return;
+    if (!S.hasBone) {
+      $('#escape-status').textContent = '🐕 "GRRRRRR…" Surcharge snaps. Bring him a bone.';
+      growl(); return;
+    }
+    S.dogDistracted = true;
+    stopDogLoop();
+    S.hasBone = false;
+    $('#inv-bone').classList.remove('has');
+    $('#inv-bone').innerHTML = '';
+    $('#z-dog').innerHTML = SVG.dogHappy + '<div class="zone-tip">Surcharge is happy now</div>';
+    $('#z-dog').classList.add('done-z');
+    $('#escape-status').textContent = '🦴➜🐕 Bone tossed. Surcharge is your best friend. The gate is clear.';
+    unlock('z-door'); setTip('z-door', 'EXIT gate — click when ready');
+    // visually remove the padlock from the gate
+    const lockG = document.getElementById('gate-lock-group');
+    if (lockG) { lockG.style.transition = 'opacity .6s, transform .6s'; lockG.style.opacity = '0'; lockG.style.transform = 'translateY(10px) rotate(20deg)'; }
+    sfx('good');
+    updateGoals();
+  });
+
+  // Gate (door) — only works when ALL goals met
+  $('#z-door').addEventListener('click', () => {
+    if (!S.dogDistracted) {
+      $('#escape-status').textContent = '🐕 Surcharge is blocking the way. Feed him first.';
+      sfx('bad'); return;
+    }
+    if (!S.hasKeys) {
+      $('#escape-status').textContent = "🔑 You can't drive away without your keys.";
+      sfx('bad'); return;
+    }
+    if (partsCollected() < 3) {
+      $('#escape-status').textContent = `🔩 You still need ${3 - partsCollected()} more gear item(s) — your engine won't run otherwise.`;
+      sfx('bad'); return;
+    }
+    if (S.escapeCash < ESCAPE_GOAL_CASH) {
+      $('#escape-status').textContent = `💵 You need $${ESCAPE_GOAL_CASH} to pay Jon for honest work. You have $${S.escapeCash}.`;
+      sfx('bad'); return;
+    }
+    $('#escape-status').textContent = '🏃‍♂️ GO GO GO!';
+    sfx('engine');
+    setTimeout(() => transition('drive'), 500);
+  });
+
+  // GO button
+  $('#escape-go-btn').addEventListener('click', () => { $('#z-door').click(); });
+}
+
+/* ===== DRIVE (canvas side-scroller) ===== */
+let driveState = null;
+function startDrive() {
+  const canvas = $('#drive-canvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  driveState = {
+    car: { x: 120, y: H - 140, vy: 0, w: 90, h: 50, onGround: true },
+    gravity: 1400, jumpV: -780,
+    speed: 260,
+    distance: 0, target: 4000,
+    obstacles: [], coins: [],
+    lastObstacle: 0, lastCoin: 0,
+    bgOffset: 0,
+    running: true,
+    lastT: performance.now(),
+    coinsCollected: 0,
+    hit: 0, // flash on hit
+  };
+  S.coins = 0;
+  driveLoop();
+  sfx('engine');
+}
+
+function driveJump() {
+  if (!driveState || !driveState.running) return;
+  if (driveState.car.onGround) {
+    driveState.car.vy = driveState.jumpV;
+    driveState.car.onGround = false;
+    sfx('click');
+  }
+}
+
+function driveLoop() {
+  const canvas = $('#drive-canvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const d = driveState;
+  if (!d || !d.running) return;
+
+  const now = performance.now();
+  const dt = Math.min(0.04, (now - d.lastT) / 1000);
+  d.lastT = now;
+
+  // update
+  d.distance += d.speed * dt;
+  d.bgOffset = (d.bgOffset + d.speed * dt) % 120;
+  d.car.vy += d.gravity * dt;
+  d.car.y += d.car.vy * dt;
+  const groundY = H - 140;
+  if (d.car.y >= groundY) { d.car.y = groundY; d.car.vy = 0; d.car.onGround = true; }
+
+  // spawn obstacles
+  if (d.distance - d.lastObstacle > 600 + Math.random()*400) {
+    d.lastObstacle = d.distance;
+    const type = Math.random() < 0.65 ? 'pothole' : 'moose';
+    d.obstacles.push({ x: W + 40, type });
+  }
+  // spawn coins
+  if (d.distance - d.lastCoin > 260 + Math.random()*200) {
+    d.lastCoin = d.distance;
+    const yBase = H - 190 - Math.floor(Math.random()*3) * 40;
+    d.coins.push({ x: W + 40, y: yBase, collected: false });
   }
 
-  // Exit check
-  if (exitPos && keys >= 3 && rectCollide(player.x, player.y, TILE, TILE, exitPos.x, exitPos.y, TILE, TILE)) {
-    endGame(true);
-  }
+  // move & filter
+  d.obstacles.forEach(o => o.x -= d.speed * dt);
+  d.coins.forEach(c => c.x -= d.speed * dt);
+  d.obstacles = d.obstacles.filter(o => o.x > -80);
+  d.coins = d.coins.filter(c => c.x > -40);
 
-  // Particles
-  for (const p of particles) {
-    p.x += p.vx; p.y += p.vy;
-    p.vy += 0.1;
-    p.life -= dt * 2;
-    p.size *= 0.95;
-  }
-  particles = particles.filter(p => p.life > 0);
+  // collision
+  const cx = d.car.x, cy = d.car.y, cw = d.car.w, ch = d.car.h;
+  d.obstacles.forEach(o => {
+    if (o.hit) return;
+    const ox = o.x, oy = o.type === 'moose' ? H - 170 : H - 100;
+    const ow = o.type === 'moose' ? 90 : 70, oh = o.type === 'moose' ? 70 : 30;
+    if (cx < ox + ow && cx + cw > ox && cy < oy + oh && cy + ch > oy) {
+      o.hit = true;
+      d.hit = 30;
+      sfx('crash');
+      // lose 2 coins
+      if (S.coins > 0) S.coins = Math.max(0, S.coins - 2);
+    }
+  });
+  d.coins.forEach(c => {
+    if (c.collected) return;
+    if (cx < c.x + 20 && cx + cw > c.x - 20 && cy < c.y + 20 && cy + ch > c.y - 20) {
+      c.collected = true;
+      S.coins++;
+      sfx('coin');
+    }
+  });
 
-  // Screen shake decay
-  if (screenShake > 0) screenShake *= 0.85;
-
-  // Wrench bob animation
-  for (const w of wrenches) { if (!w.collected) w.bob += dt * 3; }
-
-  // HUD
-  document.getElementById('timer').textContent = 'TIME: ' + Math.ceil(gameTime);
-  document.getElementById('score').textContent = 'SCORE: ' + score;
-  document.getElementById('keys').textContent = 'KEYS: ' + keys + '/3';
-}
-
-// ─── DRAW HELPERS ─────────────────────────────────────────────────────────────
-function drawTile(x, y, color, stroke=null) {
-  ctx.fillStyle = color;
-  ctx.fillRect(x, y, TILE, TILE);
-  if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 1; ctx.strokeRect(x+0.5, y+0.5, TILE-1, TILE-1); }
-}
-function drawRect(x, y, w, h, color) {
-  ctx.fillStyle = color;
-  ctx.fillRect(x, y, w, h);
-}
-function drawCircle(cx, cy, r, color) {
-  ctx.fillStyle = color;
-  ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.fill();
-}
-
-// ─── DRAW ─────────────────────────────────────────────────────────────────────
-function draw(t) {
+  // draw
   ctx.clearRect(0, 0, W, H);
+  // sky gradient baked in via CSS background; draw scene
+  const skyGrad = ctx.createLinearGradient(0, 0, 0, H);
+  skyGrad.addColorStop(0, '#7cc3f5');
+  skyGrad.addColorStop(0.6, '#b8e0d8');
+  skyGrad.addColorStop(0.7, '#7a9555');
+  skyGrad.addColorStop(1, '#5a7538');
+  ctx.fillStyle = skyGrad;
+  ctx.fillRect(0, 0, W, H);
 
+  // distant pine trees (parallax layer 1)
+  ctx.fillStyle = '#2a4a28';
+  for (let i = 0; i < 8; i++) {
+    const x = (i * 180 - d.bgOffset * 0.3) % (W + 200);
+    drawPine(ctx, x, H - 220, 1);
+  }
+  // closer pines
+  ctx.fillStyle = '#1a3018';
+  for (let i = 0; i < 10; i++) {
+    const x = ((i * 140) - d.bgOffset * 0.7) % (W + 180);
+    drawPine(ctx, x, H - 190, 1.3);
+  }
+
+  // road
+  ctx.fillStyle = '#2a2a2a';
+  ctx.fillRect(0, H - 110, W, 110);
+  // road stripes
+  ctx.fillStyle = '#fff59d';
+  for (let i = 0; i < 12; i++) {
+    const x = (i * 120 - d.bgOffset * 2) % (W + 140);
+    ctx.fillRect(x, H - 60, 50, 6);
+  }
+  // road edge lines
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, H - 112, W, 2);
+
+  // coins
+  d.coins.forEach(c => {
+    if (c.collected) return;
+    ctx.save();
+    ctx.translate(c.x, c.y);
+    ctx.fillStyle = '#facc15';
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(0, 0, 16, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#000';
+    ctx.font = 'bold 20px Arial Black';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('$', 0, 1);
+    ctx.restore();
+  });
+
+  // obstacles
+  d.obstacles.forEach(o => {
+    if (o.type === 'pothole') {
+      ctx.save();
+      ctx.translate(o.x, H - 100);
+      ctx.fillStyle = '#0a0a0a';
+      ctx.beginPath();
+      ctx.ellipse(35, 15, 40, 10, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#3a3a3a';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.restore();
+    } else {
+      // moose
+      ctx.save();
+      ctx.translate(o.x, H - 170);
+      ctx.fillStyle = '#3a2510';
+      // body
+      ctx.fillRect(15, 30, 60, 30);
+      // legs
+      ctx.fillRect(18, 55, 6, 20);
+      ctx.fillRect(32, 55, 6, 20);
+      ctx.fillRect(55, 55, 6, 20);
+      ctx.fillRect(68, 55, 6, 20);
+      // head
+      ctx.beginPath();
+      ctx.ellipse(78, 28, 18, 12, 0, 0, Math.PI * 2);
+      ctx.fill();
+      // antlers
+      ctx.strokeStyle = '#5a3a20';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(70, 18); ctx.lineTo(62, 5); ctx.moveTo(66, 12); ctx.lineTo(56, 8);
+      ctx.moveTo(85, 18); ctx.lineTo(93, 5); ctx.moveTo(89, 12); ctx.lineTo(99, 8);
+      ctx.stroke();
+      // stroke outline
+      ctx.strokeStyle = '#000';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(15, 30, 60, 30);
+      ctx.restore();
+    }
+  });
+
+  // car (hot rod) — draw via inline rendering
   ctx.save();
-  if (screenShake > 0.5) {
-    ctx.translate((Math.random()-0.5)*screenShake, (Math.random()-0.5)*screenShake);
+  ctx.translate(d.car.x, d.car.y);
+  if (d.hit > 0) {
+    d.hit--;
+    ctx.globalAlpha = d.hit % 2 ? 0.4 : 1;
   }
+  drawHotrod(ctx);
+  ctx.restore();
 
-  // Floor
-  for (let r=0;r<ROWS;r++) {
-    for (let c=0;c<COLS;c++) {
-      const x=c*TILE, y=r*TILE;
-      const alt = (r+c)%2===0;
-      drawTile(x, y, alt ? C.floor : C.floorAlt);
-    }
-  }
+  // distance & coins UI
+  $('#drive-distance').textContent = Math.min(100, Math.round((d.distance / d.target) * 100)) + '%';
+  $('#drive-money').textContent = S.coins;
 
-  // Oil stains
-  for (const o of oilStains) {
-    ctx.fillStyle = C.oil;
-    ctx.beginPath(); ctx.ellipse(o.x+20, o.y+20, 14, 10, 0.3, 0, Math.PI*2); ctx.fill();
+  if (d.distance >= d.target) {
+    d.running = false;
+    // arrival
+    setTimeout(() => transition('upfront'), 800);
+    return;
   }
+  requestAnimationFrame(driveLoop);
+}
 
-  // Exit
-  if (exitPos) {
-    const ex = exitPos.x, ey = exitPos.y;
-    const active = keys >= 3;
-    ctx.fillStyle = active ? C.exit : '#1a3a35';
-    ctx.fillRect(ex, ey, TILE, TILE);
-    ctx.fillStyle = active ? '#1de8c4' : '#0a2020';
-    for (let i=0;i<3;i++) {
-      ctx.fillRect(ex+4+i*12, ey+4, 8, TILE-8);
-    }
-    if (active) {
-      ctx.shadowColor = C.exit;
-      ctx.shadowBlur = 10 + Math.sin(t*4)*5;
-      ctx.fillStyle = '#1de8c4';
-      ctx.fillRect(ex+4, ey+4, 8, TILE-8);
-      ctx.fillRect(ex+16, ey+4, 8, TILE-8);
-      ctx.fillRect(ex+28, ey+4, 8, TILE-8);
-      ctx.shadowBlur = 0;
-    }
-  }
-
-  // Desks
-  for (const d of desks) {
-    drawTile(d.x, d.y, C.desk);
-    ctx.fillStyle = '#7d5c4a';
-    ctx.fillRect(d.x+2, d.y+2, TILE-4, 8);
-    ctx.fillStyle = '#8b6e5a';
-    ctx.fillRect(d.x+4, d.y+12, TILE-8, 4);
-  }
-
-  // Tires
-  for (const t2 of tireStacks) {
-    drawTile(t2.x, t2.y, C.tire);
-    for (let i=0;i<3;i++) {
-      ctx.fillStyle = '#1a1a2a';
-      ctx.beginPath(); ctx.arc(t2.x+8+i*10, t2.y+22, 8, 0, Math.PI*2); ctx.fill();
-      ctx.strokeStyle = '#3a3a4a'; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.arc(t2.x+8+i*10, t2.y+22, 8, 0, Math.PI*2); ctx.stroke();
-    }
-  }
-
-  // Cars
-  for (const car of cars) {
-    const cx = car.x, cy = car.y;
-    // shadow
-    ctx.fillStyle = 'rgba(0,0,0,0.3)';
-    ctx.fillRect(cx+4, cy+TILE-6, TILE-4, 6);
-    // body
-    ctx.fillStyle = car.color;
-    ctx.fillRect(cx+2, cy+10, TILE-4, TILE-18);
-    // roof
-    ctx.fillStyle = shadeColor(car.color, -20);
-    ctx.fillRect(cx+6, cy+4, TILE-12, 12);
-    // windows
-    ctx.fillStyle = '#1a2a3a';
-    ctx.fillRect(cx+8, cy+6, TILE-16, 8);
-    // headlights
-    ctx.fillStyle = '#ffe066';
-    ctx.fillRect(cx+2, cy+14, 4, 4);
-    ctx.fillRect(cx+TILE-6, cy+14, 4, 4);
-    // wheels
-    ctx.fillStyle = '#111';
-    ctx.fillRect(cx+4, cy+22, 8, 6);
-    ctx.fillRect(cx+TILE-12, cy+22, 8, 6);
-  }
-
-  // Wrenches
-  for (const w of wrenches) {
-    if (w.collected) continue;
-    const wx = w.x + TILE/2;
-    const wy = w.y + TILE/2 + Math.sin(w.bob) * 3;
-    // glow
-    ctx.shadowColor = C.wrench;
-    ctx.shadowBlur = 8 + Math.sin(t*5)*4;
-    ctx.strokeStyle = C.wrench;
-    ctx.lineWidth = 3;
-    ctx.lineCap = 'round';
-    // wrench handle
-    ctx.beginPath(); ctx.moveTo(wx-8, wy-8); ctx.lineTo(wx+8, wy+8); ctx.stroke();
-    // wrench head (C shape)
-    ctx.beginPath(); ctx.arc(wx+8, wy-8, 6, 0.5, 2.5); ctx.stroke();
-    // bolt tip
-    ctx.beginPath(); ctx.arc(wx-8, wy+8, 4, 0, Math.PI*2); ctx.stroke();
-    ctx.shadowBlur = 0;
-  }
-
-  // Walls (drawn last so they're on top)
-  for (const wall of walls) {
-    drawTile(wall.x, wall.y, C.wall);
-    ctx.fillStyle = C.wallTop;
-    ctx.fillRect(wall.x, wall.y, wall.w, 4);
-    ctx.fillStyle = 'rgba(255,255,255,0.03)';
-    ctx.fillRect(wall.x, wall.y, wall.w, 2);
-  }
-
-  // Player
-  const px = player.x + 4;
-  const py = player.y + 2;
-  const bobY = (player.walk > 0) ? Math.sin(player.walk * 2) * 2 : 0;
-  // shadow
-  ctx.fillStyle = 'rgba(0,0,0,0.35)';
-  ctx.beginPath(); ctx.ellipse(px+16, py+36, 10, 4, 0, 0, Math.PI*2); ctx.fill();
-  // body
-  ctx.fillStyle = '#2a4a7a';
-  ctx.fillRect(px+8, py+12+bobY, 16, 16);
-  // head
-  ctx.fillStyle = C.player;
-  ctx.fillRect(px+9, py+2+bobY, 14, 12);
-  // eyes
-  ctx.fillStyle = '#111';
-  if (player.dir === 0) { // right
-    ctx.fillRect(px+18, py+5+bobY, 3, 3);
-    ctx.fillRect(px+14, py+5+bobY, 3, 3);
-  } else if (player.dir === 2) { // left
-    ctx.fillRect(px+11, py+5+bobY, 3, 3);
-    ctx.fillRect(px+7, py+5+bobY, 3, 3);
-  } else if (player.dir === 3) { // up
-    ctx.fillRect(px+11, py+3+bobY, 3, 3);
-    ctx.fillRect(px+18, py+3+bobY, 3, 3);
-  } else { // down
-    ctx.fillStyle = '#111';
-    ctx.fillRect(px+11, py+7+bobY, 10, 4);
-  }
-  // legs
-  const legOffset = player.walk > 0 ? Math.sin(player.walk * 2) * 3 : 0;
-  ctx.fillStyle = C.playerDk;
-  ctx.fillRect(px+8, py+28+bobY, 6, 8);
-  ctx.fillRect(px+18, py+28+bobY, 6, 8);
-  if (player.walk > 0) {
-    ctx.fillRect(px+8+legOffset, py+28+bobY, 6, 8);
-    ctx.fillRect(px+18-legOffset, py+28+bobY, 6, 8);
-  }
-
-  // Particles
-  for (const p of particles) {
-    ctx.globalAlpha = p.life;
-    ctx.fillStyle = p.color;
-    ctx.fillRect(p.x - p.size/2, p.y - p.size/2, p.size, p.size);
-  }
-  ctx.globalAlpha = 1;
-
+function drawPine(ctx, x, y, scale=1) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(scale, scale);
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(-25, 40);
+  ctx.lineTo(-12, 40);
+  ctx.lineTo(-30, 70);
+  ctx.lineTo(-15, 70);
+  ctx.lineTo(-32, 100);
+  ctx.lineTo(32, 100);
+  ctx.lineTo(15, 70);
+  ctx.lineTo(30, 70);
+  ctx.lineTo(12, 40);
+  ctx.lineTo(25, 40);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = '#3a2510';
+  ctx.fillRect(-5, 100, 10, 14);
   ctx.restore();
 }
 
-function shadeColor(color, amount) {
-  const hex = color.replace('#','');
-  const r = Math.max(0, Math.min(255, parseInt(hex.substr(0,2),16)+amount));
-  const g = Math.max(0, Math.min(255, parseInt(hex.substr(2,2),16)+amount));
-  const b = Math.max(0, Math.min(255, parseInt(hex.substr(4,2),16)+amount));
-  return '#'+[r,g,b].map(x=>x.toString(16).padStart(2,'0')).join('');
+function drawHotrod(ctx) {
+  // simple pixel-style hotrod
+  ctx.save();
+  // body
+  ctx.fillStyle = '#d01a12';
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(5, 30); ctx.lineTo(12, 30);
+  ctx.quadraticCurveTo(18, 30, 22, 22);
+  ctx.lineTo(52, 22); ctx.quadraticCurveTo(58, 22, 62, 30);
+  ctx.lineTo(85, 30); ctx.lineTo(88, 38); ctx.lineTo(8, 38);
+  ctx.closePath();
+  ctx.fill(); ctx.stroke();
+  // cabin
+  ctx.fillStyle = '#ff2a18';
+  ctx.beginPath();
+  ctx.moveTo(24, 22); ctx.lineTo(30, 8);
+  ctx.quadraticCurveTo(34, 5, 42, 5); ctx.lineTo(52, 5);
+  ctx.quadraticCurveTo(58, 7, 58, 14); ctx.lineTo(58, 22);
+  ctx.closePath();
+  ctx.fill(); ctx.stroke();
+  // window
+  ctx.fillStyle = '#0a1020';
+  ctx.fillRect(32, 10, 22, 10);
+  // engine on hood
+  ctx.fillStyle = '#565a63';
+  ctx.fillRect(62, 14, 14, 10);
+  ctx.fillStyle = '#e0e4ea';
+  ctx.fillRect(64, 8, 2, 8);
+  ctx.fillRect(68, 8, 2, 8);
+  ctx.fillRect(72, 8, 2, 8);
+  // headlight
+  ctx.fillStyle = '#fff3a0';
+  ctx.beginPath(); ctx.arc(86, 30, 2.5, 0, Math.PI*2); ctx.fill();
+  // flame decal
+  ctx.strokeStyle = '#ffd400';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(14, 34); ctx.quadraticCurveTo(20, 30, 26, 34);
+  ctx.quadraticCurveTo(32, 30, 38, 34); ctx.quadraticCurveTo(44, 30, 50, 34);
+  ctx.stroke();
+  // wheels
+  ctx.fillStyle = '#141416';
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(20, 44, 9, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.arc(72, 46, 12, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#c8ccd2';
+  ctx.beginPath(); ctx.arc(20, 44, 3.5, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(72, 46, 5, 0, Math.PI*2); ctx.fill();
+  ctx.restore();
 }
 
-// ─── GAME LOOP ───────────────────────────────────────────────────────────────
-function loop(timestamp) {
-  const dt = Math.min((timestamp - lastTime) / 1000, 0.05);
-  lastTime = timestamp;
-  update(dt);
-  draw(timestamp / 1000);
-  animFrame = requestAnimationFrame(loop);
+document.addEventListener('keydown', (e) => {
+  if (S.scene === 'drive' && (e.key === ' ' || e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W')) {
+    e.preventDefault();
+    driveJump();
+  }
+});
+$('#ctrl-up').addEventListener('click', driveJump);
+$('#ctrl-up').addEventListener('touchstart', (e) => { e.preventDefault(); driveJump(); });
+
+/* ===== UP FRONT ARRIVAL ===== */
+$('#jon-char').innerHTML = SVG.jon;
+$('#you-char-uf').innerHTML = SVG.you;
+$('#upfront-next').addEventListener('click', () => {
+  sfx('click');
+  $('#upfront-dialogue-wrap').style.display = 'none';
+  $('#gauge-wrap').style.display = 'block';
+  // animate gauge from red to green
+  setTimeout(() => {
+    $('#gauge-needle').style.transform = 'rotate(90deg)';
+    sfx('ding');
+  }, 600);
+  setTimeout(() => {
+    $('#real-problem').classList.add('show');
+    sfx('good');
+  }, 2600);
+  setTimeout(() => {
+    $('#real-quote').classList.add('show');
+    sfx('victory');
+  }, 3400);
+  setTimeout(() => {
+    $('#approve-btn').style.display = 'inline-flex';
+  }, 4200);
+});
+$('#approve-btn').addEventListener('click', () => {
+  sfx('good');
+  transition('score');
+});
+
+/* ===== SCORECARD ===== */
+function renderScorecard() {
+  const sal = S.billTotal;
+  // Jon charges an honest flat rate
+  const paid = 18.5 + 60;  // inspection + honest labor, example
+  const saved = sal - paid;
+  const liesSpotted = S.liesCaught;
+  const liesTotal = S.totalFake;
+  const coins = S.coins;
+  const scrapeCash = S.escapeCash || 0;
+  const totalCashFound = scrapeCash + coins;
+
+  let stars = 0;
+  if (liesSpotted >= liesTotal - 1) stars = 5;
+  else if (liesSpotted >= liesTotal - 2) stars = 4;
+  else if (liesSpotted >= liesTotal - 3) stars = 3;
+  else if (liesSpotted >= liesTotal - 4) stars = 2;
+  else stars = 1;
+
+  $('#sc-sal').textContent = '$' + sal.toLocaleString();
+  $('#sc-paid').textContent = '$' + paid.toLocaleString();
+  $('#sc-lies').textContent = `${liesSpotted} / ${liesTotal}`;
+  $('#sc-coins').textContent = '$' + totalCashFound + ' (scavenged $' + scrapeCash + ' + $' + coins + ' on the road)';
+  $('#sc-stars').textContent = '★'.repeat(stars) + '☆'.repeat(5 - stars);
+  $('#sc-saved').textContent = '$' + Math.max(0, saved).toLocaleString();
+  sfx('victory');
 }
 
-// ─── END GAME ─────────────────────────────────────────────────────────────────
-function endGame(won_) {
-  gameRunning = false;
-  gameOver = true;
-  won = won_;
-  score += won ? Math.floor(gameTime * 10) : 0;
-  showOverlay();
-}
+$('#share-btn').addEventListener('click', () => {
+  sfx('click');
+  const saved = S.billTotal;
+  const text = `I just escaped Sal's Super Save Auto and saved $${saved.toLocaleString()} by finding Up Front Auto Repair. Play it: upfrontautorepair207.com  ·  (207) 648-4747`;
+  if (navigator.share) {
+    navigator.share({ title: 'I Escaped Sal\'s', text, url: 'https://upfrontautorepair207.com' }).catch(() => {});
+  } else {
+    navigator.clipboard?.writeText(text);
+    const btn = $('#share-btn');
+    const orig = btn.textContent;
+    btn.textContent = '✓ COPIED TO CLIPBOARD';
+    setTimeout(() => btn.textContent = orig, 2200);
+  }
+});
 
-function showOverlay() {
-  const overlay = document.getElementById('overlay');
-  overlay.className = won ? 'win' : 'lose';
-  overlay.innerHTML = `
-    <h1>${won ? 'YOU ESCAPED!' : 'TIME\'S UP!'}</h1>
-    <p>${won ? 'You got out of Sal\'s before closing time!' : 'Sal locked up and you\'re sleeping in the shop tonight.'}</p>
-    <p style="margin-top:12px;">FINAL SCORE: <strong style="color:#ff6b1a;font-size:14px;">${score}</strong></p>
-    <p style="margin-top:6px; color:#606070;">WRENCHES: ${keys}/3</p>
-    <button class="btn" onclick="restartGame()">PLAY AGAIN</button>
-  `;
-}
+$('#replay-btn').addEventListener('click', () => {
+  sfx('click');
+  // reset
+  S.liesCaught = 0; S.liesMissed = 0; S.realMissed = 0;
+  S.billTotal = 0; S.billDisputed = 0; S.coins = 0;
+  S.hasBone = false; S.hasKeys = false; S.dogDistracted = false; S.drawerOpened = false;
+  S.startTime = Date.now();
+  renderMeetDialog('meet-1');
+  transition('meet');
+});
 
-function restartGame() {
-  document.getElementById('overlay').className = '';
-  document.getElementById('overlay').innerHTML = `
-    <h1>ESCAPE FROM<br>SAL'S GARAGE</h1>
-    <p>Sal's shop is closing and you left your keys inside.</p>
-    <p>Find <span class="key">3 WRENCHES</span>, then escape through the exit!</p>
-    <p style="margin-top:12px; color:#606070; font-size:10px;">WASD / ARROWS to move &nbsp;|&nbsp; Find all 3 wrenches, then reach the exit!</p>
-    <button onclick="startGame()">INSERT COIN</button>
-  `;
-  initGame();
-  gameRunning = false;
-}
+/* ===== SOUND TOGGLE ===== */
+$('#sound-toggle').addEventListener('click', () => {
+  S.soundOn = !S.soundOn;
+  $('#sound-toggle').textContent = S.soundOn ? '🔊' : '🔇';
+  if (!S.soundOn) {
+    stopMusic(); stopEngine(); stopDogLoop();
+    if (masterGain) masterGain.gain.value = 0;
+  } else {
+    initAudio();
+    if (masterGain) masterGain.gain.value = 1;
+    sfx('click');
+    const theme = themeForScene(S.scene);
+    if (theme) playMusic(theme);
+    if (S.scene === 'drive') startEngine();
+    const dogScenes = ['meet','diag','mabel','bill','escape'];
+    if (dogScenes.includes(S.scene) && !S.dogDistracted) startDogLoop();
+  }
+});
 
-function startGame() {
-  document.getElementById('overlay').style.display = 'none';
-  initGame();
-  lastTime = performance.now();
-  if (!animFrame) animFrame = requestAnimationFrame(loop);
-}
+/* ===== SCENE INIT HOOKS ===== */
+// Spawn dust in Sal's scenes
+spawnDust('dust-1');
+spawnDust('dust-2');
 
-// ─── BOOT ─────────────────────────────────────────────────────────────────────
-initGame();
+// Set up listeners that fire on scene change
+const origSetScene = setScene;
+function onSceneEnter(id) {
+  updateHud();
+  // AUDIO: swap background music per scene
+  const theme = themeForScene(id);
+  if (theme) playMusic(theme); else stopMusic();
+  // AUDIO: engine only during drive
+  if (id === 'drive') startEngine(); else stopEngine();
+  // AUDIO: dog loop only where Surcharge is present (and not distracted yet)
+  const dogScenes = ['meet','diag','mabel','bill','escape'];
+  if (dogScenes.includes(id) && !S.dogDistracted) startDogLoop(); else stopDogLoop();
+
+  if (id === 'meet') { renderMeetDialog('meet-1'); setTimeout(() => bark(), 400); }
+  if (id === 'mabel') { /* nothing extra */ }
+  if (id === 'bill') { renderBill(); }
+  if (id === 'escape') { setupEscape(); }
+  if (id === 'drive') { setTimeout(startDrive, 200); }
+  if (id === 'upfront') {
+    // reset upfront state
+    $('#upfront-dialogue-wrap').style.display = 'block';
+    $('#gauge-wrap').style.display = 'none';
+    $('#gauge-needle').style.transform = 'rotate(-90deg)';
+    $('#real-problem').classList.remove('show');
+    $('#real-quote').classList.remove('show');
+    $('#approve-btn').style.display = 'none';
+  }
+  if (id === 'score') { renderScorecard(); }
+}
+// wrap setScene
+window.setScene = function(id) {
+  origSetScene(id);
+  setTimeout(() => onSceneEnter(id), 100);
+};
+// Also wrap transition to use new setScene
+window.transition = function(next, delay=400) {
+  $('#fade').classList.add('show');
+  setTimeout(() => {
+    window.setScene(next);
+    setTimeout(() => $('#fade').classList.remove('show'), 50);
+  }, delay);
+};
+
+// Prevent browser from consuming arrow keys for scroll
+window.addEventListener('keydown', (e) => {
+  if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) {
+    if (S.scene === 'drive' || S.scene === 'diag') e.preventDefault();
+  }
+}, { passive: false });
+
+console.log('%cEscape From Sal\'s', 'font-family:Bungee;font-size:24px;color:#ff6b1a;');
+console.log('Up Front Auto Repair · (207) 648-4747 · Standish, ME');
 </script>
 </body>
 </html>
