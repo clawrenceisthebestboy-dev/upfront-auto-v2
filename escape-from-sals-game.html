@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Escape From Sal's Garage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: #0a0a0f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  overflow: hidden;
+  font-family: 'JetBrains Mono', monospace;
+  color: #e0e0e0;
+}
+canvas {
+  display: block;
+  image-rendering: pixelated;
+  border: 2px solid #2a1f3a;
+  box-shadow: 0 0 40px rgba(255,107,26,0.15), inset 0 0 60px rgba(0,0,0,0.5);
+}
+#ui {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 24px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  color: #ff6b1a;
+  text-shadow: 0 0 8px rgba(255,107,26,0.6);
+  pointer-events: none;
+  white-space: nowrap;
+}
+#overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10,10,15,0.92);
+  z-index: 10;
+}
+#overlay h1 {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 18px;
+  color: #ff6b1a;
+  text-shadow: 0 0 20px rgba(255,107,26,0.8);
+  margin-bottom: 20px;
+  text-align: center;
+  line-height: 1.8;
+}
+#overlay p {
+  font-size: 11px;
+  color: #a0a0b0;
+  margin-bottom: 8px;
+  text-align: center;
+  max-width: 400px;
+  line-height: 1.8;
+}
+#overlay .key {
+  color: #14a58b;
+  background: rgba(20,165,139,0.15);
+  border: 1px solid rgba(20,165,139,0.4);
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+#overlay button, #overlay .btn {
+  margin-top: 24px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  color: #0a0a0f;
+  background: #ff6b1a;
+  border: none;
+  padding: 14px 28px;
+  cursor: pointer;
+  border-radius: 4px;
+  text-transform: uppercase;
+  box-shadow: 0 0 20px rgba(255,107,26,0.4);
+  transition: all 0.2s;
+}
+#overlay button:hover, #overlay .btn:hover {
+  background: #ff8c3a;
+  box-shadow: 0 0 30px rgba(255,107,26,0.7);
+  transform: translateY(-2px);
+}
+.win h1 { color: #14a58b !important; text-shadow: 0 0 20px rgba(20,165,139,0.8) !important; }
+.lose h1 { color: #ef4444 !important; text-shadow: 0 0 20px rgba(239,68,68,0.8) !important; }
+</style>
+</head>
+<body>
+
+<div id="ui">
+  <span id="timer">TIME: 60</span>
+  <span id="score">SCORE: 0</span>
+  <span id="keys">KEYS: 0/3</span>
+</div>
+
+<div id="overlay">
+  <h1>ESCAPE FROM<br>SAL'S GARAGE</h1>
+  <p>Sal's shop is closing and you left your keys inside.</p>
+  <p>Find <span class="key">3 WRENCHES</span>, then escape through the exit!</p>
+  <p style="margin-top:12px; color:#606070; font-size:10px;">WASD / ARROWS to move &nbsp;|&nbsp; SPACE to interact</p>
+  <button onclick="startGame()">INSERT COIN</button>
+</div>
+
+<canvas id="game"></canvas>
+
+<script>
+// ─── CONSTANTS ────────────────────────────────────────────────────────────────
+const TILE = 40;
+const COLS = 20;
+const ROWS = 15;
+const W = COLS * TILE;
+const H = ROWS * TILE;
+
+// ─── MAP ──────────────────────────────────────────────────────────────────────
+// 0=floor, 1=wall, 2=car, 3=wrench, 4=exit, 5=desk, 6=oil stain, 7=tire stack
+const MAP = [
+  [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+  [1,6,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,4,1],
+  [1,0,1,1,0,1,0,1,1,1,0,1,1,0,1,0,1,1,0,1],
+  [1,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,1],
+  [1,0,1,0,1,1,1,1,0,1,1,1,1,1,1,1,0,1,0,1],
+  [1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,1],
+  [1,1,1,1,1,0,0,1,0,1,1,1,1,1,0,1,0,1,1,1],
+  [1,3,0,0,0,0,0,0,0,1,7,7,7,1,0,0,0,0,0,1],
+  [1,0,1,1,1,1,0,1,1,1,0,0,0,1,1,1,1,1,0,1],
+  [1,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,1],
+  [1,1,1,0,1,1,1,1,1,1,0,1,1,1,1,1,1,1,0,1],
+  [1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,5,0,0,0,1],
+  [1,0,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,3,1],
+  [1,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,1],
+  [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+];
+
+// ─── CANVAS SETUP ─────────────────────────────────────────────────────────────
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+canvas.width = W;
+canvas.height = H;
+
+// ─── COLORS ───────────────────────────────────────────────────────────────────
+const C = {
+  floor:    '#1a1625',
+  floorAlt: '#1e1a2e',
+  wall:     '#2d2440',
+  wallTop:  '#3d3260',
+  carBody:  ['#c0392b','#2471a3','#1e8449','#d4ac0d','#7d3c98'],
+  wrench:   '#ff6b1a',
+  exit:     '#14a58b',
+  desk:     '#6b4c3a',
+  oil:      '#1a1a2a',
+  tire:     '#2a2a3a',
+  player:   '#f0c040',
+  playerDk: '#b08020',
+};
+
+// ─── GAME STATE ───────────────────────────────────────────────────────────────
+let player, wrenches, exitPos, walls, cars, desks, oilStains, tireStacks;
+let score, keys, gameTime, gameRunning, gameOver, won, animFrame;
+let keysPressed = {};
+let lastTime = 0;
+let particles = [];
+let screenShake = 0;
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+function initGame() {
+  player = { x: 9 * TILE, y: 13 * TILE, vx: 0, vy: 0, dir: 0, walk: 0, frame: 0 };
+  score = 0;
+  keys = 0;
+  gameTime = 60;
+  gameRunning = true;
+  gameOver = false;
+  won = false;
+  particles = [];
+  screenShake = 0;
+
+  wrenches = [];
+  exitPos = null;
+  walls = [];
+  cars = [];
+  desks = [];
+  oilStains = [];
+  tireStacks = [];
+
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      const t = MAP[r][c];
+      if (t === 1) walls.push({ x: c*TILE, y: r*TILE, w: TILE, h: TILE });
+      if (t === 2) cars.push({ x: c*TILE, y: r*TILE, color: C.carBody[(r*3+c)%5] });
+      if (t === 3) wrenches.push({ x: c*TILE, y: r*TILE, collected: false, bob: Math.random()*Math.PI*2, glow: 0 });
+      if (t === 4) exitPos = { x: c*TILE, y: r*TILE };
+      if (t === 5) desks.push({ x: c*TILE, y: r*TILE });
+      if (t === 6) oilStains.push({ x: c*TILE, y: r*TILE });
+      if (t === 7) tireStacks.push({ x: c*TILE, y: r*TILE });
+    }
+  }
+}
+
+// ─── INPUT ─────────────────────────────────────────────────────────────────────
+window.addEventListener('keydown', e => {
+  keysPressed[e.code] = true;
+  if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code)) e.preventDefault();
+});
+window.addEventListener('keyup', e => { keysPressed[e.code] = false; });
+
+// ─── PHYSICS / COLLISION ───────────────────────────────────────────────────────
+function rectCollide(ax,ay,aw,ah,bx,by,bw,bh) {
+  return ax < bx+bw && ax+aw > bx && ay < by+bh && ay+ah > by;
+}
+function isSolid(x,y) {
+  const c = Math.floor(x/TILE), r = Math.floor(y/TILE);
+  if (c<0||c>=COLS||r<0||r>=ROWS) return true;
+  return MAP[r][c] === 1;
+}
+function canMove(x,y,w,h) {
+  const margin = 2;
+  return !isSolid(x+margin,y+margin) && !isSolid(x+w-margin,y+margin)
+      && !isSolid(x+margin,y+h-margin) && !isSolid(x+w-margin,y+h-margin);
+}
+
+// ─── SPAWN PARTICLES ──────────────────────────────────────────────────────────
+function spawnParticles(x,y,color,count=8) {
+  for (let i=0;i<count;i++) {
+    const angle = Math.random()*Math.PI*2;
+    const speed = 1+Math.random()*3;
+    particles.push({ x, y, vx: Math.cos(angle)*speed, vy: Math.sin(angle)*speed, life: 1, color, size: 3+Math.random()*4 });
+  }
+}
+
+// ─── UPDATE ───────────────────────────────────────────────────────────────────
+function update(dt) {
+  if (!gameRunning || gameOver) return;
+
+  // Timer
+  gameTime -= dt;
+  if (gameTime <= 0) { gameTime = 0; endGame(false); return; }
+
+  // Player movement
+  const speed = 160;
+  let dx = 0, dy = 0;
+  if (keysPressed['ArrowLeft'] || keysPressed['KeyA']) dx = -1;
+  if (keysPressed['ArrowRight'] || keysPressed['KeyD']) dx = 1;
+  if (keysPressed['ArrowUp'] || keysPressed['KeyW']) dy = -1;
+  if (keysPressed['ArrowDown'] || keysPressed['KeyS']) dy = 1;
+
+  if (dx !== 0 || dy !== 0) {
+    player.dir = dx === 1 ? 0 : dx === -1 ? 2 : dy === -1 ? 3 : 1;
+    const nx = player.x + dx * speed * dt;
+    const ny = player.y + dy * speed * dt;
+    const pw = TILE - 8, ph = TILE - 4;
+    const pox = player.x + 4, poy = player.y + 2;
+    const pnx = nx + 4, pny = ny + 2;
+    if (canMove(pnx, pox, pw, ph)) player.x = Math.max(4, Math.min(W - TILE + 4, nx));
+    if (canMove(pnx, pny, pw, ph)) player.y = Math.max(4, Math.min(H - TILE + 2, ny));
+    player.walk += dt * 10;
+    player.frame = Math.floor(player.walk) % 4;
+  }
+
+  // Wrench collection
+  for (const w of wrenches) {
+    if (!w.collected && rectCollide(player.x, player.y, TILE, TILE, w.x, w.y, TILE, TILE)) {
+      w.collected = true;
+      w.glow = 1;
+      keys++;
+      score += 100;
+      spawnParticles(w.x + TILE/2, w.y + TILE/2, C.wrench, 15);
+      screenShake = 5;
+    }
+  }
+
+  // Exit check
+  if (exitPos && keys >= 3 && rectCollide(player.x, player.y, TILE, TILE, exitPos.x, exitPos.y, TILE, TILE)) {
+    endGame(true);
+  }
+
+  // Particles
+  for (const p of particles) {
+    p.x += p.vx; p.y += p.vy;
+    p.vy += 0.1;
+    p.life -= dt * 2;
+    p.size *= 0.95;
+  }
+  particles = particles.filter(p => p.life > 0);
+
+  // Screen shake decay
+  if (screenShake > 0) screenShake *= 0.85;
+
+  // Wrench bob animation
+  for (const w of wrenches) { if (!w.collected) w.bob += dt * 3; }
+
+  // HUD
+  document.getElementById('timer').textContent = 'TIME: ' + Math.ceil(gameTime);
+  document.getElementById('score').textContent = 'SCORE: ' + score;
+  document.getElementById('keys').textContent = 'KEYS: ' + keys + '/3';
+}
+
+// ─── DRAW HELPERS ─────────────────────────────────────────────────────────────
+function drawTile(x, y, color, stroke=null) {
+  ctx.fillStyle = color;
+  ctx.fillRect(x, y, TILE, TILE);
+  if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 1; ctx.strokeRect(x+0.5, y+0.5, TILE-1, TILE-1); }
+}
+function drawRect(x, y, w, h, color) {
+  ctx.fillStyle = color;
+  ctx.fillRect(x, y, w, h);
+}
+function drawCircle(cx, cy, r, color) {
+  ctx.fillStyle = color;
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.fill();
+}
+
+// ─── DRAW ─────────────────────────────────────────────────────────────────────
+function draw(t) {
+  ctx.clearRect(0, 0, W, H);
+
+  ctx.save();
+  if (screenShake > 0.5) {
+    ctx.translate((Math.random()-0.5)*screenShake, (Math.random()-0.5)*screenShake);
+  }
+
+  // Floor
+  for (let r=0;r<ROWS;r++) {
+    for (let c=0;c<COLS;c++) {
+      const x=c*TILE, y=r*TILE;
+      const alt = (r+c)%2===0;
+      drawTile(x, y, alt ? C.floor : C.floorAlt);
+    }
+  }
+
+  // Oil stains
+  for (const o of oilStains) {
+    ctx.fillStyle = C.oil;
+    ctx.beginPath(); ctx.ellipse(o.x+20, o.y+20, 14, 10, 0.3, 0, Math.PI*2); ctx.fill();
+  }
+
+  // Exit
+  if (exitPos) {
+    const ex = exitPos.x, ey = exitPos.y;
+    const active = keys >= 3;
+    ctx.fillStyle = active ? C.exit : '#1a3a35';
+    ctx.fillRect(ex, ey, TILE, TILE);
+    ctx.fillStyle = active ? '#1de8c4' : '#0a2020';
+    for (let i=0;i<3;i++) {
+      ctx.fillRect(ex+4+i*12, ey+4, 8, TILE-8);
+    }
+    if (active) {
+      ctx.shadowColor = C.exit;
+      ctx.shadowBlur = 10 + Math.sin(t*4)*5;
+      ctx.fillStyle = '#1de8c4';
+      ctx.fillRect(ex+4, ey+4, 8, TILE-8);
+      ctx.fillRect(ex+16, ey+4, 8, TILE-8);
+      ctx.fillRect(ex+28, ey+4, 8, TILE-8);
+      ctx.shadowBlur = 0;
+    }
+  }
+
+  // Desks
+  for (const d of desks) {
+    drawTile(d.x, d.y, C.desk);
+    ctx.fillStyle = '#7d5c4a';
+    ctx.fillRect(d.x+2, d.y+2, TILE-4, 8);
+    ctx.fillStyle = '#8b6e5a';
+    ctx.fillRect(d.x+4, d.y+12, TILE-8, 4);
+  }
+
+  // Tires
+  for (const t2 of tireStacks) {
+    drawTile(t2.x, t2.y, C.tire);
+    for (let i=0;i<3;i++) {
+      ctx.fillStyle = '#1a1a2a';
+      ctx.beginPath(); ctx.arc(t2.x+8+i*10, t2.y+22, 8, 0, Math.PI*2); ctx.fill();
+      ctx.strokeStyle = '#3a3a4a'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(t2.x+8+i*10, t2.y+22, 8, 0, Math.PI*2); ctx.stroke();
+    }
+  }
+
+  // Cars
+  for (const car of cars) {
+    const cx = car.x, cy = car.y;
+    // shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.fillRect(cx+4, cy+TILE-6, TILE-4, 6);
+    // body
+    ctx.fillStyle = car.color;
+    ctx.fillRect(cx+2, cy+10, TILE-4, TILE-18);
+    // roof
+    ctx.fillStyle = shadeColor(car.color, -20);
+    ctx.fillRect(cx+6, cy+4, TILE-12, 12);
+    // windows
+    ctx.fillStyle = '#1a2a3a';
+    ctx.fillRect(cx+8, cy+6, TILE-16, 8);
+    // headlights
+    ctx.fillStyle = '#ffe066';
+    ctx.fillRect(cx+2, cy+14, 4, 4);
+    ctx.fillRect(cx+TILE-6, cy+14, 4, 4);
+    // wheels
+    ctx.fillStyle = '#111';
+    ctx.fillRect(cx+4, cy+22, 8, 6);
+    ctx.fillRect(cx+TILE-12, cy+22, 8, 6);
+  }
+
+  // Wrenches
+  for (const w of wrenches) {
+    if (w.collected) continue;
+    const wx = w.x + TILE/2;
+    const wy = w.y + TILE/2 + Math.sin(w.bob) * 3;
+    // glow
+    ctx.shadowColor = C.wrench;
+    ctx.shadowBlur = 8 + Math.sin(t*5)*4;
+    ctx.strokeStyle = C.wrench;
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    // wrench handle
+    ctx.beginPath(); ctx.moveTo(wx-8, wy-8); ctx.lineTo(wx+8, wy+8); ctx.stroke();
+    // wrench head (C shape)
+    ctx.beginPath(); ctx.arc(wx+8, wy-8, 6, 0.5, 2.5); ctx.stroke();
+    // bolt tip
+    ctx.beginPath(); ctx.arc(wx-8, wy+8, 4, 0, Math.PI*2); ctx.stroke();
+    ctx.shadowBlur = 0;
+  }
+
+  // Walls (drawn last so they're on top)
+  for (const wall of walls) {
+    drawTile(wall.x, wall.y, C.wall);
+    ctx.fillStyle = C.wallTop;
+    ctx.fillRect(wall.x, wall.y, wall.w, 4);
+    ctx.fillStyle = 'rgba(255,255,255,0.03)';
+    ctx.fillRect(wall.x, wall.y, wall.w, 2);
+  }
+
+  // Player
+  const px = player.x + 4;
+  const py = player.y + 2;
+  const bobY = (player.walk > 0) ? Math.sin(player.walk * 2) * 2 : 0;
+  // shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.35)';
+  ctx.beginPath(); ctx.ellipse(px+16, py+36, 10, 4, 0, 0, Math.PI*2); ctx.fill();
+  // body
+  ctx.fillStyle = '#2a4a7a';
+  ctx.fillRect(px+8, py+12+bobY, 16, 16);
+  // head
+  ctx.fillStyle = C.player;
+  ctx.fillRect(px+9, py+2+bobY, 14, 12);
+  // eyes
+  ctx.fillStyle = '#111';
+  if (player.dir === 0) { // right
+    ctx.fillRect(px+18, py+5+bobY, 3, 3);
+    ctx.fillRect(px+14, py+5+bobY, 3, 3);
+  } else if (player.dir === 2) { // left
+    ctx.fillRect(px+11, py+5+bobY, 3, 3);
+    ctx.fillRect(px+7, py+5+bobY, 3, 3);
+  } else if (player.dir === 3) { // up
+    ctx.fillRect(px+11, py+3+bobY, 3, 3);
+    ctx.fillRect(px+18, py+3+bobY, 3, 3);
+  } else { // down
+    ctx.fillStyle = '#111';
+    ctx.fillRect(px+11, py+7+bobY, 10, 4);
+  }
+  // legs
+  const legOffset = player.walk > 0 ? Math.sin(player.walk * 2) * 3 : 0;
+  ctx.fillStyle = C.playerDk;
+  ctx.fillRect(px+8, py+28+bobY, 6, 8);
+  ctx.fillRect(px+18, py+28+bobY, 6, 8);
+  if (player.walk > 0) {
+    ctx.fillRect(px+8+legOffset, py+28+bobY, 6, 8);
+    ctx.fillRect(px+18-legOffset, py+28+bobY, 6, 8);
+  }
+
+  // Particles
+  for (const p of particles) {
+    ctx.globalAlpha = p.life;
+    ctx.fillStyle = p.color;
+    ctx.fillRect(p.x - p.size/2, p.y - p.size/2, p.size, p.size);
+  }
+  ctx.globalAlpha = 1;
+
+  ctx.restore();
+}
+
+function shadeColor(color, amount) {
+  const hex = color.replace('#','');
+  const r = Math.max(0, Math.min(255, parseInt(hex.substr(0,2),16)+amount));
+  const g = Math.max(0, Math.min(255, parseInt(hex.substr(2,2),16)+amount));
+  const b = Math.max(0, Math.min(255, parseInt(hex.substr(4,2),16)+amount));
+  return '#'+[r,g,b].map(x=>x.toString(16).padStart(2,'0')).join('');
+}
+
+// ─── GAME LOOP ───────────────────────────────────────────────────────────────
+function loop(timestamp) {
+  const dt = Math.min((timestamp - lastTime) / 1000, 0.05);
+  lastTime = timestamp;
+  update(dt);
+  draw(timestamp / 1000);
+  animFrame = requestAnimationFrame(loop);
+}
+
+// ─── END GAME ─────────────────────────────────────────────────────────────────
+function endGame(won_) {
+  gameRunning = false;
+  gameOver = true;
+  won = won_;
+  score += won ? Math.floor(gameTime * 10) : 0;
+  showOverlay();
+}
+
+function showOverlay() {
+  const overlay = document.getElementById('overlay');
+  overlay.className = won ? 'win' : 'lose';
+  overlay.innerHTML = `
+    <h1>${won ? 'YOU ESCAPED!' : 'TIME\'S UP!'}</h1>
+    <p>${won ? 'You got out of Sal\'s before closing time!' : 'Sal locked up and you\'re sleeping in the shop tonight.'}</p>
+    <p style="margin-top:12px;">FINAL SCORE: <strong style="color:#ff6b1a;font-size:14px;">${score}</strong></p>
+    <p style="margin-top:6px; color:#606070;">WRENCHES: ${keys}/3</p>
+    <button class="btn" onclick="restartGame()">PLAY AGAIN</button>
+  `;
+}
+
+function restartGame() {
+  document.getElementById('overlay').className = '';
+  document.getElementById('overlay').innerHTML = `
+    <h1>ESCAPE FROM<br>SAL'S GARAGE</h1>
+    <p>Sal's shop is closing and you left your keys inside.</p>
+    <p>Find <span class="key">3 WRENCHES</span>, then escape through the exit!</p>
+    <p style="margin-top:12px; color:#606070; font-size:10px;">WASD / ARROWS to move &nbsp;|&nbsp; Find all 3 wrenches, then reach the exit!</p>
+    <button onclick="startGame()">INSERT COIN</button>
+  `;
+  initGame();
+  gameRunning = false;
+}
+
+function startGame() {
+  document.getElementById('overlay').style.display = 'none';
+  initGame();
+  lastTime = performance.now();
+  if (!animFrame) animFrame = requestAnimationFrame(loop);
+}
+
+// ─── BOOT ─────────────────────────────────────────────────────────────────────
+initGame();
+</script>
+</body>
+</html>
